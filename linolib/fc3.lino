@@ -1,0 +1,114 @@
+
+define point {
+  number x, y;
+}
+
+define line {
+  point start, end, c;
+  constraints { 
+    (start + end) / 2 = c;
+  }
+  draw { &draw_line; }
+}
+
+define hline extends line {
+  number y, len;
+  constraints {
+    y = start.y;
+    y = end.y;
+    len = end.x - start.x;
+  }
+}
+
+define vline extends line {
+  number x, len;
+  constraints {
+    x = start.x;
+    x = end.x;
+    len = end.y - start.y;
+  }
+}
+
+define box {
+  point n, s, e, w, ne, se, nw, sw, c;
+  hline top, bottom;
+  vline left, right;
+  number ht, wd;
+  constraints {
+    nw = top.start;
+    ne = top.end;
+    sw = bottom.start;
+    se = bottom.end;
+    n  = (nw + ne)/2;
+    s  = (sw + se)/2;
+    w  = (nw + sw)/2;
+    e  = (ne + se)/2;
+    c  = (n  + s )/2;
+    top.start    = left.start;
+    top.end      = right.start;
+    bottom.start = left.end;
+    bottom.end   = right.end;
+    ht = left.len;
+    wd = top.len;
+  } 
+}
+
+
+box F, add, mul, c32, c59, C;
+
+line i, j, k1, k2, l, m;
+
+point kk;
+
+
+constraints {
+     i.start = F.e;   i.end=add.nw;
+     j.start = add.e; j.end=c32.w;
+     l.start = c59.e; l.end=mul.sw;
+     m.start = mul.e; m.end=C.w;
+
+  F.ht = 2; F.wd = 2;
+  F.nw = (0, 0);
+
+  add = F   + ( 3,  3);
+  c32 = add + ( 3,  0);
+  mul = add + ( 0,       3);
+  C   = mul + ( 3,  0);
+  c59 = mul + (-3,  3);
+
+  kk.x = add.sw.x - 2/3;
+  kk.y = (add.sw.y + mul.nw.y)/2;
+  k1.start = kk;
+  k1.end = add.sw;
+  k2.start = kk;
+  k2.end = mul.nw;
+
+}
+
+
+__END__
+
+use Data::Dumper;
+print "%!\n";
+
+sub draw_hline {
+  print Dumper("HLINE: ", @_);
+}
+
+sub draw_vline {
+  print Dumper("VLINE: ", @_);
+}
+
+sub draw_line {
+  my $env = shift;
+  my $s = hash2str($env->var_hash);
+#  print "DRAWING LINE ($s)\n";
+
+
+
+                        my ($a, $b, $c, $d) = map $_ * 36, @{$env}{qw(start.x start.y end.x end.y)};
+        
+  print "$a $b moveto $c $d lineto stroke\n";
+}
+
+

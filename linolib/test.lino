@@ -1,0 +1,16 @@
+
+define foo {
+  number a, b;
+  constraints { a = b ; }
+  draw { &draw_foo; }
+}
+
+foo P, Q;
+constraints { P = Q; P.a = 3; }
+
+__END__
+
+sub draw_foo {
+  my $e = shift;
+  print "Foo: ($e->{a}, $e->{b})\n";
+}

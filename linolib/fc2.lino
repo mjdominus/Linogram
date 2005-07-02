@@ -1,0 +1,108 @@
+
+define point {
+  number x, y;
+}
+
+define line {
+  point start, end, c;
+  constraints { 
+    (start + end) / 2 = c;
+  }
+  draw { &draw_line; }
+}
+
+define hline extends line {
+  number y, len;
+  constraints {
+    y = start.y;
+    y = end.y;
+    len = end.x - start.x;
+  }
+}
+
+define vline extends line {
+  number x, len;
+  constraints {
+    x = start.x;
+    x = end.x;
+    len = end.y - start.y;
+  }
+}
+
+define box {
+  point n, s, e, w, ne, se, nw, sw, c;
+  hline top, bottom;
+  vline left, right;
+  number ht, wd;
+  constraints {
+    nw = top.start;
+    ne = top.end;
+    sw = bottom.start;
+    se = bottom.end;
+    n  = (nw + ne)/2;
+    s  = (sw + se)/2;
+    w  = (nw + sw)/2;
+    e  = (ne + se)/2;
+    c  = (n  + s )/2;
+    top.start    = left.start;
+    top.end      = right.start;
+    bottom.start = left.end;
+    bottom.end   = right.end;
+    ht = left.len;
+    wd = top.len;
+  } 
+}
+
+define square extends box {
+  constraints { ht = wd; }
+}
+
+define ellipse extends box {
+  draw { &draw_ellipse; }
+}
+
+define circle extends ellipse {
+  constraints { ht = wd; }
+}
+
+box F, add, mul, c32, c59, C;
+
+number hspace, vspace;
+
+line i, j, k1, k2, l, m;
+
+point kk;
+
+
+constraints {
+
+  add = F   + ( hspace,  vspace);
+  c32 = add + ( hspace,  0);
+  mul = add + ( 0,       vspace);
+  C   = mul + ( hspace,  0);
+  c59 = mul + (0-hspace,  vspace);
+
+  hspace = 1;
+  vspace = 1;
+}
+
+
+__END__
+
+use Data::Dumper;
+
+sub draw_hline {
+  print Dumper("HLINE: ", @_);
+}
+
+sub draw_vline {
+  print Dumper("VLINE: ", @_);
+}
+
+sub draw_line {
+  my $env = shift;
+  my $s = hash2str($env->var_hash);
+  print "DRAWING LINE ($s)\n";
+}
+
+

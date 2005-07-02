@@ -1,0 +1,79 @@
+
+
+define point {
+  number x, y;
+  draw { &draw_point; } 
+}
+
+define line {
+  point start, end;
+  draw { &draw_line; } 
+}
+
+define hline  extends line {
+  number y, length;
+  constraints {
+    start.y = end.y;
+    start.y = y;
+    start.x + length = end.x;
+  }
+}
+
+define vline  extends line {
+  number x, length;
+  constraints {
+    start.x = end.x;
+    start.x = x;
+    start.y + length = end.y;
+  }
+}
+
+define box {
+  vline left, right;
+  hline top, bottom;
+  point nw, n, ne, e, se, s, sw, w, c;
+  number ht, wd;
+  constraints {
+    left.start  = top.start;
+    right.start = top.end;
+    left.end    = bottom.start;
+    right.end   = bottom.end;
+    nw = left.start;
+    ne = right.start;
+    sw = left.end;
+    se = right.end;
+
+    n = (nw + ne)/2;
+    s = (sw + se)/2;
+    w = (nw + sw)/2;
+    e = (ne + se)/2;
+
+    c = (n + s)/2;
+
+    ht = left.length;
+    wd = top.length;
+  }
+}
+
+
+box A;
+
+constraints {
+  A.nw = (0, 0);
+  A.ht = 2;
+  A.n = (5, 0);
+}
+
+__END__
+
+sub draw_line { 
+  my $env = shift;
+  my $s = hash2str($env->var_hash);
+  print "DRAWING LINE ($s)\n";
+}
+
+sub draw_point {
+  my $env = shift;
+  my $s = hash2str($env->var_hash);
+#  print "DRAWING POINT ($s)\n";
+}

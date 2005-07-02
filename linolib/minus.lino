@@ -1,0 +1,9 @@
+
+define point { number x, y; }
+
+point A, B;
+
+constraints {
+  A = (-2, 3);
+  B = -A;
+}

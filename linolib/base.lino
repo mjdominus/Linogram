@@ -1,0 +1,85 @@
+
+define point {
+  number x, y;
+}
+
+define line {
+  point start, end, c;
+  constraints { 
+    (start + end) / 2 = c;
+  }
+}
+
+define hline deriving line {
+  number y, len;
+  constraints {
+    y = start.y;
+    y = end.y;
+    len = end.x - start.x
+  };
+  draw { &draw_hline }
+}
+
+define vline deriving line {
+  number x, len;
+  constraints {
+    x = start.x;
+    x = end.x;
+    len = end.y - start.y
+  };
+  draw { &draw_vline }
+}
+
+define box {
+  point n, s, e, w, ne, se, nw, sw, c;
+  hline top, bottom;
+  vline left, right;
+  number ht, wd;
+  constraints {
+    nw = top.start;
+    ne = top.end;
+    sw = bottom.start;
+    se = bottom.end;
+    n  = (nw + ne)/2;
+    s  = (sw + se)/2;
+    w  = (nw + sw)/2;
+    e  = (ne + se)/2;
+    c  = (n  + s )/2;
+    top.start    = left.start;
+    top.end      = right.start;
+    bottom.start = left.end;
+    bottom.end   = right.end;
+    ht = left.len;
+    wd = top.len;
+  } 
+}
+
+define square deriving box {
+  constraints { ht = wd }
+}
+
+define ellipse deriving box {
+  draw { &draw_ellipse }
+}
+
+define circle deriving ellipse {
+  constraints { ht = wd }
+}
+
+square S
+box(nw.x=2, nw.y=7, ht=3, wd=4)
+S.left = box0.right
+
+__END__
+
+
+sub draw_hline {
+  use Data::Dumper;
+  print Dumper("HLINE: ", @_);
+}
+
+sub draw_vline {
+  use Data::Dumper;
+  print Dumper("VLINE: ", @_);
+}
+

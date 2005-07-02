@@ -1,0 +1,29 @@
+
+
+define point {
+  number x, y;
+  draw { &draw_point; } 
+}
+
+define line {
+  point start, end;
+  draw { &draw_line; }
+}
+
+point P(x = 2, y = 3);
+line L(start=P, end=(4, 5));
+
+
+__END__
+
+sub draw_point {
+  my $env = shift;
+  my $s = hash2str($env->var_hash);
+  print "DRAWING POINT ($s)\n";
+}
+
+sub draw_line {
+  my $env = shift;
+  my $s = hash2str($env->var_hash);
+  print "DRAWING LINE ($s)\n";
+}
