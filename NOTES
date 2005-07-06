@@ -1,0 +1,82 @@
+
+20050705
+
+Your idea about parametrized definitions, for polygons, splines,
+etc., seems like a better one than you initially thought.  You don't
+need a syntax as complicated as:
+
+        define polygon {
+          point v[n], c[n];
+          constraints {
+            c[j] = (v[j]+v[j+1])/2 for j in 1 .. n-1
+            c[n] = (v[n]+v[0])/2 
+          }
+        }
+
+
+Instead, by restricting the semantics, you can allow:
+
+        define polygon[n] closed {
+          point v[n], c[n];
+
+          constraints {
+            c[j] = (v[j] + v[j+1])/2;
+          }
+        }
+
+and leave it at that.  The subscript is iterated at the time the
+definition is instantiated; for example
+
+        polygon mypoly[5];
+
+instantiates a polygon with points v0 .. v4, c0 .. c4, and constraints
+
+        c0 = (v0 + v1)/2;
+        c1 = (v1 + v2)/2;
+        c2 = (v2 + v3)/2;
+        c3 = (v3 + v4)/2;
+        c4 = (v4 + v0)/2;
+
+where the subscripts in the names are all calculated mod 5.  The
+mod-5-ness is effected by the "closed" keyword in the header.  If we
+had instead used "open" (the default) the constraints with overflowing
+subscript numbers would simply have been discarded.
+
+Note that this works too:
+
+        define reg_polygon[n] extends polygon[n] {
+          param number r, rot = 0;
+          constraints {
+            v[j] = (r * cos(j * 360 / n + rot),
+                    r * sin(j * 360 / n + rot));
+          }
+        }
+
+It's probably better not to let the [n] be implicit in the header.
+This is for two reasons.  First, you need the name to be explicitly
+declared so that it is available for use in the definition, as in the
+previous example.  And second, making [n] implicit would rule out
+
+        define foo[n] extends bar[2*n+1] {
+          ...
+        }
+
+which could be quite useful.
+----------------------------------------------------------------
+
+20050705
+
+When linogram gets builtin sin() and cos() functions, they should take
+degree arguments, not radian arguments.
+
+----------------------------------------------------------------
+20050705
+
+Syntactic additions:
+
+        
+        point p = (4,3), q = left.end;
+        constraints {
+          a = b = c;
+        }
+
