@@ -7,8 +7,8 @@ LIBS= \
 	lib/Expression.pm \
 	lib/Parser.pm
 
-test: .tested
 
-.tested: do_tests linogram.pl $(LIBS) testutils.pl Makefile
+# do_tests linogram.pl $(LIBS) testutils.pl Makefile
+test: 
 	perl do_tests t
 	@touch .tested

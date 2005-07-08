@@ -1,0 +1,10 @@
+
+define point { number x, y; }
+
+point P, Q;
+
+constraints {Q = (4, 6);
+             P+P = Q;
+        }
+
+draw { &dump_hash; }

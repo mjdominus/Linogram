@@ -37,9 +37,15 @@ sub diff_report {
 for my $input (@inputs) {
   my ($fno) = $input =~ /^i(\d+)$/ or die "input $input??";
   ++$N;
-  my $output = "o$fno";
+  my $output = "$dir/o$fno";
+  my $stamp = "$dir/.o$fno";
+  if (-e($stamp) &&
+      (-M($stamp) < -M("t/$input") || -M($stamp) < -M($output))) {
+    print "ok $N - skipped (unchanged)\n";
+    next;
+  }
   my @input = sort qx{./linogram.pl -P testutils.pl t/$input 2> /dev/null};
-  my @output = sort qx{cat t/$output};
+  my @output = sort qx{cat $output};
   chomp @input;
   chomp @output;
   my $dr = diff_report(\@input, \@output);
@@ -48,6 +54,8 @@ for my $input (@inputs) {
     print map "# $_\n", @$dr;
     print "not ok $N\n";
   } else {
+    open my($z), ">", $stamp;
+    utime undef, undef, $stamp;
     print "ok $N\n";
   }
 }

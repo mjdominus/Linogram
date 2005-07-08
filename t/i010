@@ -1,0 +1,21 @@
+
+define point { number x, y; }
+define line { point start, end, center;
+              constraints { center * 2 = start + end; }
+              draw { &dump_hash; }
+            }
+
+line A, B;
+number n;
+
+constraints {
+   n = 4;
+   A.start.y = A.end.y;
+   B.start.x = B.end.x;
+   A.end = B.center;
+   A.start.x + n = B.end.x;
+   B.end.y - B.center.y = n;
+   A.start = (0,0);
+}
+
+
