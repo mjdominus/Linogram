@@ -12,3 +12,9 @@ LIBS= \
 test: 
 	perl do_tests t
 	@touch .tested
+
+alltests: nostamps test
+
+nostamps:
+	@rm -f t/.o???
+

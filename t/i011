@@ -13,7 +13,6 @@ constraints {
    B.start.x = B.end.x;
    A.end = B.center;
    A.start.x + n = B.end.x;
-   B.end.y - B.center.y = n;
    A.start = (0,0);
 }
 

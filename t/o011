@@ -7,7 +7,5 @@ A.start.y: 0
 B.center.x: 4
 B.center.y: 0
 B.end.x: 4
-B.end.y: 4
 B.start.x: 4
-B.start.y: -4
 n: 4
