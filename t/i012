@@ -1,0 +1,9 @@
+
+define point { number x, y; }
+define point3 extends point { number z; }
+
+point3 A;
+
+constraints { A = (1, 2, 3); }
+
+draw { &dump_hash; }

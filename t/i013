@@ -1,0 +1,11 @@
+
+define point { number x, y; }
+define line { point start, end; }
+define cline extends line { point center;
+               constraints { center = (start + end) / 2; } }
+
+cline C;
+
+constraints { C.start = (2,3); C.end = (4, 5); }
+
+draw { &dump_hash; }
