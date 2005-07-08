@@ -1,0 +1,8 @@
+
+define point { number x, y; }
+
+point P(y=4), Q(x=3);
+
+constraints {P=Q+(1,2);}
+
+draw { &dump_hash; }

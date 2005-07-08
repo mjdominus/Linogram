@@ -1,0 +1,18 @@
+
+define atype {
+   number n;
+   param number p;
+   constraints { n * p = 1; }
+}
+
+define btype {
+   atype a(p = 3);
+   draw { &draw_btype; }
+}
+
+__END__
+
+sub draw_btype {
+  my $env = shift;
+  print STDERR qq{*** n = $env->{"a.n"}\n};
+}

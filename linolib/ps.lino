@@ -1,0 +1,7 @@
+
+define atype {
+   number n;
+   param number p;
+   constraints { n * p = 1; }
+}
+

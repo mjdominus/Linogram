@@ -1,0 +1,6 @@
+
+define point { number x, y; }
+
+point P, Q(x=3);
+
+draw { &dump_hash; }

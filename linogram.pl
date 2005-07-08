@@ -19,6 +19,18 @@ $|=1;
 
 use lib 'lib';
 use strict;
+
+while (@ARGV && $ARGV[0] =~ /-(\w)/) {
+  my $opt = $1;
+  shift;
+  if ($opt eq "P") {
+    my $file = shift;
+    require $file;
+  } else {
+    usage();
+  }
+}
+
 use Lexer;
 use Parser qw(_ parser star option commalist labeledblock operator %N 
               lookfor $End_of_Input error);
@@ -28,7 +40,7 @@ use Chunk;
 use Expression;
 use Stream 'drop';
 
-my $FILE = shift || die "Usage: $0 filename";
+my $FILE = shift || die "Usage: $0 [-Pperllib] filename";
 warn "Using $FILE\n";
 open INPUT, "<", $FILE or die $!;
 
@@ -39,7 +51,7 @@ my %TYPES = ('number' => Type::Scalar->new('number'),
 my $input = sub { read INPUT, my($buf), 8192 or return; $buf };
 
 my @keywords = map [uc($_), qr/\b$_\b/],
-  qw(constraints define extends draw);
+  qw(constraints define extends draw param);
 
 my $tokens = 
   i2s(make_lexer($input,
@@ -119,7 +131,7 @@ $program = star($Definition
 $defheader = _("DEFINE") - _("IDENTIFIER") - $Extends
   >> sub { ["DEFINITION", @_[1,2] ]};
 
-$definition = labeledblock($defheader, $Declaration)
+$definition = labeledblock($Defheader, $Declaration)
   >> sub {
      my ($defheader, @declarations) = @_;
      my ($name, $extends) = @$defheader[1,2];
@@ -142,8 +154,9 @@ $definition = labeledblock($defheader, $Declaration)
 
 $extends = option(_("EXTENDS") - _("IDENTIFIER") >> sub { $_[1] }) ;
 
-$declaration = $Type - commalist($Declarator) - _("TERMINATOR")
-                 >> sub { my ($type, $decl_list) = @_;
+$declaration = option(_("PARAM")) - $Type
+             - commalist($Declarator) - _("TERMINATOR")
+                 >> sub { my ($is_param, $type, $decl_list) = @_;
 			  unless (exists $TYPES{$type}) {
 			    pic_error("Unknown type name '$type' in declaration '@_'\n");
 			  }
@@ -151,7 +164,8 @@ $declaration = $Type - commalist($Declarator) - _("TERMINATOR")
                             $_->{TYPE} = $type;
                             check_declarator($TYPES{$type}, $_);
                           }
-                          {WHAT => 'DECLARATION', 
+                          {WHAT => 'DECLARATION',
+                           IS_PARAM => $is_param ? 1 : 0,
                            DECLARATORS => $decl_list };
                         }
              | $Constraint_section 
@@ -260,14 +274,6 @@ $perl_code = _("ENDMARKER") > sub { warn "Evaling perl code $_[0]\n";
 
 ################################################################
 
-
-sub param_to_constraints {
-  my ($type_name, $left, $right) = @_;
-  my $left_constraints = expression_to
-  expression_to_constraints($TYPES{$type_name}, 
-			    ['-', ['VAR', $left], $right]
-			   );
-}
 
 sub check_types {
   my ($a, $b) = @_;

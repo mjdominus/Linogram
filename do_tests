@@ -1,0 +1,55 @@
+#!/usr/bin/perl
+
+my $N = 0;
+my $dir = shift || ".";
+
+my @inputs;
+if (@ARGV) {
+  @inputs = @ARGV;
+} else {
+  opendir  my ($t), $dir or die "opendir $dir: $!";
+  @inputs = grep /^i\d+$/, readdir $t;
+}
+
+print "1..", scalar(@inputs), "\n";
+
+sub diff_report {
+  my ($a, $b) = @_;
+  my @r;
+  while (@$a && @$b) {
+    my ($A, $B) = ($a->[0], $b->[0]);
+    if ($A lt $B) {
+      push @r, "- $A";
+      shift @$a;
+    } elsif ($A gt $B) {
+      push @r, "+ $B";
+      shift @$b;
+    } else {
+      shift @$a;
+      shift @$b;
+    }
+  }
+  push @r, map "- $_", @$a;
+  push @r, map "+ $_", @$b;
+  return \@r;
+}
+
+for my $input (@inputs) {
+  my ($fno) = $input =~ /^i(\d+)$/ or die "input $input??";
+  ++$N;
+  my $output = "o$fno";
+  my @input = sort qx{./linogram.pl -P testutils.pl t/$input 2> /dev/null};
+  my @output = sort qx{cat t/$output};
+  chomp @input;
+  chomp @output;
+  my $dr = diff_report(\@input, \@output);
+  if (@$dr) {
+    print "# $input -> $output\n";
+    print map "# $_\n", @$dr;
+    print "not ok $N\n";
+  } else {
+    print "ok $N\n";
+  }
+}
+
+

@@ -320,7 +320,7 @@ sub values {
 
 sub print_system {
   for ($_[0]->equations) {
-    print "* ", $_->eqn_to_string, "\n";
+    print STDERR "* ", $_->eqn_to_string, "\n";
   }
 }
 
