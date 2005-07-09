@@ -62,6 +62,23 @@ previous example.  And second, making [n] implicit would rule out
         }
 
 which could be quite useful.
+
+----------------------------------------------------------------
+
+20050707
+
+It shouldn't generate objects named 
+
+        c0 = (v0 + v1)/2;
+
+but rather
+
+        c[0] = (v[0] + v[1])/2;
+
+The draw functions can handle this just as easily, and it avoids (1)
+conflicts with other items named "c1" and "v1" and (2) problems
+concerning how to deal with"v[n-1]" and such.
+
 ----------------------------------------------------------------
 
 20050705
@@ -79,4 +96,236 @@ Syntactic additions:
         constraints {
           a = b = c;
         }
+
+----------------------------------------------------------------
+20050706
+
+Note that in this definition:
+
+        define reg_polygon[n] extends polygon[n] {
+          param number r, rot = 0;
+          constraints {
+            v[j] = (r * cos(j * 360 / n + rot),
+                    r * sin(j * 360 / n + rot));
+          }
+        }
+
+r need *not* be a parameter:
+
+        define reg_polygon[n] extends polygon[n] {
+          param number rot = 0;
+*         number r;
+          constraints {
+            v[j] = (r * cos(j * 360 / n + rot),
+                    r * sin(j * 360 / n + rot));
+          }
+        }
+
+which is very good, because we can do cool stuff like
+
+        reg_polygon[5] pentagon(rot = 180, v1 = foo, v2 = bar);
+
+and it will figure out how big the pentagon needs to be.
+
+----------------------------------------------------------------
+
+20050706
+
+The parametrized definitions thing seems quite doable.  Parameters can
+appear in five places:
+
+  1. In definition headers
+
+        DEFINE polygon[n] ... { ... }           # n is a VAR
+
+  2. In feature declaration type names:
+
+        polygon[3] t1, t2;                      # 3 is an EXPR
+
+  3. In declarators:
+
+        line edge[n];                           # n is a VAR
+
+  4. In expressions:
+
+        point v[n] = (v[n+1] + v[n-1]) / 2;     # n+1 and n-1 are EXPRs
+
+  5. In drawables:
+
+        draw { e[1]; e[2]; e[3] }               # 1,2,3 are EXPRs
+
+
+
+
+        define polygon[n] closed {
+          point v[n], c[n];
+          line e[n];
+
+          constraints {
+            c[j] = e[j].center;   # c[j] = (v[j] + v[j+1])/2;
+            e[j].start = v[j];
+            e[j].end   = v[j+1];
+          }
+        }
+
+
+Do you need some sort of explicit declaration for the iteration
+variable j in this example?  Something like:
+
+          constraints {
+            forall j: c[j] = e[j].center;   # c[j] = (v[j] + v[j+1])/2;
+            forall j: e[j].start = v[j];
+            forall j: e[j].end   = v[j+1];
+          }
+
+You mustn't re-use n here!  Or else
+
+        forall j: v[j].x = start.x + j/n * length;
+
+
+becomes impossible, and it would be a good thing to have.
+
+You need this on the declarations too, because otherwise how can you
+say
+
+        point v0 = start
+        point v_{n-1} = end?
+
+The natural notation is
+
+        point v[n-1] = end;
+
+which must not be confused with
+
+        forall n: point v[n-1] = end
+
+which is quite different.  On the other hand, the use of the name "n"
+itself in the former declaration might be enough to disambiguate it.
+
+
+----------------------------------------------------------------
+
+20050706
+
+Note that 
+
+        point v[n] = (v[n+1] + v[n-1]) / 2;     # n+1 and n-1 are EXPRs
+
+which you made up at random is silly for closed polygons, but could be
+really useful for open ones.  It doesn't constrain v0 or v_n at all.
+
+----------------------------------------------------------------
+
+20050707
+
+Regarding "forall", you could avoid the syntactic weirdness by just
+reserving some special token to stand for the iterated variable; for
+example
+
+        forall j: v[j].x = start.x + j/n * length;
+
+becomes
+
+        v[_].x = start.x + _/n * length;
+
+or some such.  Problem with this approach: it's hard to handle
+doubly-parametrized types.  (You weren't planning to deal with
+doubly-parametrized types anyway, but you might someday.)  A related
+alternative:  multiplier variables much be capitalized, in which case
+the lowercase version is automatically reserved as an iterator.  For
+example
+
+        define polygon[N] closed {
+          point v[n], c[n];
+
+          constraints {
+            c[n] = (v[n] + v[n+1])/2;
+          }
+        }
+
+Where N and n are implictly linked.  Then we have
+
+
+        v[n].x = start.x + n/N * length;
+
+which seems straightforward enough.
+
+
+----------------------------------------------------------------
+20050707
+
+Parsing is still slow, so you can have two formats for diagram files.
+The compiled version of the files can be either an ad-hoc byte-offset
+format like you did for the XML syntax in the cookbook project, or
+maybe just Data::Dumpering the type objects wil be sufficient.
+
+----------------------------------------------------------------
+
+20050707
+
+Now, let's return to this:
+
+  1. In definition headers
+
+        DEFINE polygon[n] ... { ... }           # n is a VAR
+
+
+This established a new multiplier parameter named "n", stored at the
+top level of the type object:
+
+        MULTIPLIER_PARAM => "n"
+
+  2. In declarators:
+
+        line edge[n];                           # n is a VAR
+
+Here we check the current type to make sure that a multiplier param
+has been declared with the right name ("n").   We annotate the entry
+in the object hash.  Normally, it has
+
+        edge => $LINE
+
+but we'll adjoin additional information:
+
+        edge => [$LINE, "n"]
+
+or probably better, a separate hash:
+
+        O => { edge => $LINE, ... }
+        M => { edge => "n" }
+
+
+  3. In feature declaration type names:
+
+        polygon[3] t1, t2;                      # 3 is an EXPR
+
+
+Here we look up the definition of "polygon" and check to make sure it
+has a multiplier parameter.  If so, we record
+
+        MULTIPLIER_VAL => 3
+
+in the "declaration" structure.  When the type definition is complete,
+we will instantiate the objects declared by the declarators.  These
+themselves have
+
+        PARAM_SPECS => ...
+
+Just before instantiation, we install (n => 3) into the PARAM_SPECS.
+We then instantiate normally.  But instantiation now has a new case.
+add_subobj_declaration doesn't immediately add the subchunk; instead,
+it checks for a MULTIPLIER_VAL.  If this is absent, it does the same
+thing it does now.   If not, it multiplies the declaration object by
+the multiplier val, effectively translating
+
+        polygon[3] 
+
+  4. In expressions:
+
+        point v[n] = (v[n+1] + v[n-1]) / 2;     # n+1 and n-1 are EXPRs
+
+  5. In drawables:
+
+        draw { e[1]; e[2]; e[3] }               # 1,2,3 are EXPRs
+
 
