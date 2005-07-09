@@ -20,7 +20,7 @@ $|=1;
 use lib 'lib';
 use strict;
 
-while (@ARGV && $ARGV[0] =~ /-(\w)/) {
+while (@ARGV && $ARGV[0] =~ /^-(\w)/) {
   my $opt = $1;
   shift;
   if ($opt eq "P") {
@@ -46,6 +46,7 @@ open INPUT, "<", $FILE or die $!;
 
 my $ROOT_TYPE = Type->new('ROOT');
 my %TYPES = ('number' => Type::Scalar->new('number'),
+#             'string' => Type::Scalar->new('string'),
              'ROOT'   => $ROOT_TYPE,
             );
 my $input = sub { read INPUT, my($buf), 8192 or return; $buf };
@@ -162,6 +163,7 @@ $declaration = option(_("PARAM")) - $Type
 			  }
                           for (@$decl_list) {
                             $_->{TYPE} = $type;
+                            $_->{PARAM} = $is_param;
                             check_declarator($TYPES{$type}, $_);
                           }
                           {WHAT => 'DECLARATION',
@@ -192,6 +194,15 @@ $param_spec = _("IDENTIFIER") - _("EQUALS") - $Expression
     }
   }
   ;
+
+#$pdeclarator = _("IDENTIFIER") 
+#             - option(_("EQUAL") - $Expression >> sub { $_[1] })
+#  >> sub {
+#    { WHAT => 'PDECLARATOR',
+#      NAME => $_[0],
+#      DEFAULT => $_[1],
+#    };
+#  };
 
 $constraint_section = labeledblock(_("CONSTRAINTS"), $Constraint)
   >> sub { shift;
