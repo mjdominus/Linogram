@@ -8,7 +8,7 @@ if (@ARGV) {
   @inputs = @ARGV;
 } else {
   opendir  my ($t), $dir or die "opendir $dir: $!";
-  @inputs = grep /^i\d+$/, readdir $t;
+  @inputs = sort grep /-i$/, readdir $t;
 }
 
 print "1..", scalar(@inputs), "\n";
@@ -34,17 +34,19 @@ sub diff_report {
   return \@r;
 }
 
-for my $input (@inputs) {
-  my ($fno) = $input =~ /^i(\d+)$/ or die "input $input??";
+for my $infile (@inputs) {
+  $infile =~ s/-i$// or die "input $input??";
+  my $input = "$dir/$infile-i";
   ++$N;
-  my $output = "$dir/o$fno";
-  my $stamp = "$dir/.o$fno";
+  my $output = "$dir/$infile-o";
+  my $stamp = "$dir/.$infile-o";
+
   if (-e($stamp) &&
-      (-M($stamp) < -M("t/$input") || -M($stamp) < -M($output))) {
-    print "ok $N - skipped (unchanged)\n";
+      (-M($stamp) < -M("$input") || -M($stamp) < -M($output))) {
+    print "ok $N - $infile skipped (unchanged)\n";
     next;
   }
-  my @input = sort qx{./linogram.pl -P testutils.pl t/$input 2> /dev/null};
+  my @input = sort qx{./linogram.pl -P testutils.pl $input 2> /dev/null};
   my @output = sort qx{cat $output};
   chomp @input;
   chomp @output;
@@ -56,7 +58,7 @@ for my $input (@inputs) {
   } else {
     open my($z), ">", $stamp;
     utime undef, undef, $stamp;
-    print "ok $N\n";
+    print "ok $N # $infile \n";
   }
 }
 

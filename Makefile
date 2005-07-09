@@ -16,5 +16,5 @@ test:
 alltests: nostamps test
 
 nostamps:
-	@rm -f t/.o???
+	@rm -f t/.*-o
 
