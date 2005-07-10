@@ -206,11 +206,13 @@ $param_spec = _("IDENTIFIER") - _("EQUALS") - $Expression
 
 $constraint_section = labeledblock(_("CONSTRAINTS"), $Constraint)
   >> sub { shift;
-           { WHAT => 'CONSTRAINTS', CONSTRAINTS => [@_] }
+           { WHAT => 'CONSTRAINTS', CONSTRAINTS => [map @$_, @_] }
          };
 
-$constraint = $Expression - _("EQUALS") - $Expression - _("TERMINATOR")
-  >> sub { Expression->new('-', $_[0], $_[2]) } ;
+$constraint = commalist($Expression, _("EQUALS"), " = ") - _("TERMINATOR")
+  >> sub { my ($expr1, @exprs) = @{$_[0]};
+           [map Expression->new('-', $expr1, $_), @exprs]
+          } ;
 
 $draw_section = labeledblock(_("DRAW"), $Drawable)
   >> sub { shift; { WHAT => 'DRAWABLES', DRAWABLES => [@_] } };
