@@ -1,0 +1,6 @@
+number a, b, c;
+constraints { a = b = c;
+                a = 4;
+            }
+
+draw { &dump_hash; }

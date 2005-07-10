@@ -1,0 +1,25 @@
+
+define point { number x, y; }
+define line { point start, end, center; 
+              constraints { center = (start + end)/2; }
+}
+define hline extends line { 
+        number y, length;
+        constraints { start.y = y; end.y = y; length = end.x - start.x; }
+}
+define vline extends line { 
+        number x, length;
+        constraints { start.x = x; end.x = x; length = end.y -
+        start.y; }
+}
+             
+hline H; vline V;
+
+constraints { 
+  H.length = V.length;
+  H.center = V.center;
+  H.center = (0,0);
+  H.start = (-1, 0);
+}
+
+draw { &dump_hash; }

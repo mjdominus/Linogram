@@ -1,0 +1,16 @@
+H.start.x: -1
+H.end.x: 1
+H.center.x: 0
+H.start.y: 0
+H.end.y: 0
+H.center.y: 0
+H.y: 0
+H.length: 2
+V.start.y: -1
+V.end.y: 1
+V.center.y: 0
+V.start.x: 0
+V.end.x: 0
+V.center.x: 0
+V.x: 0
+V.length: 2
