@@ -1,0 +1,6 @@
+define sometype { number n; param number p = 5; 
+                  constraints { n * p = 20; }
+                }
+
+sometype s(p=4);
+draw { &dump_hash; }
