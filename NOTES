@@ -398,3 +398,21 @@ all the Q.y and all the P.y equations, but the others would remain:
         Q.x = 1
 
 
+----------------------------------------------------------------
+
+20050711
+
+        require "trig";
+
+can load trig.lino, which is simply:
+
+        builtin sin, cos;
+
+        __END__
+
+        my $PI = atan2(0, -1);
+
+        register_builtin(sin => sub { sin($_[0] * $PI / 180) });
+        register_builtin(cos => sub { cos($_[0] * $PI / 180) });
+
+

@@ -9,12 +9,11 @@ o multiplied types
 
 o more tests
 
-o declaration to pause and load a linogram library file
+* declaration to pause and load a linogram library file
 
-o declaration to require a Perl file
-  (or can this be taken care of just by putting 
-        require "foo.pl";  
-   into the __END__ section?)
+* declaration to require a Perl file
+
+  * not needed; just "require 'blah'" in the __END__ section
 
 o   type name = EXPR
    equivalent to
@@ -22,3 +21,6 @@ o   type name = EXPR
         constraints { name = EXPR; }
 
 * Builtin functions - sin(), cos(), sqrt()
+
+  o "builtin foo;"
+
