@@ -18,3 +18,8 @@ alltests: nostamps test
 nostamps:
 	@rm -f t/.*-o
 
+diff:  DIFFS
+
+DIFFS: $(LIBS) linogram.pl
+	cvs diff -u > DIFFS
+
