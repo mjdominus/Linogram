@@ -4,6 +4,8 @@ use Data::Dumper;
 $Data::Dumper::Freezer = 'FREEZER';
 sub UNIVERSAL::FREEZER { $_[0] }
 
+my @search_path = split /:/, $ENV{LINOGRAM_LIB_DIRS} || ".:./linolib";
+
 #$SIG{__DIE__} = sub {
 #  die @_ if $^S && ref $_[0];
 #  my $N = 1;
@@ -139,11 +141,7 @@ $program = star($Definition
               | $Declaration
                 > sub { add_declarations($ROOT_TYPE, $_[0]) }
               )
-         - option($Perl_code) - $End_of_Input
-  >> sub {
-#    print "FINISHED READING THE PROGRAM\n";
-    $ROOT_TYPE->draw();
-  };
+         - option($Perl_code) - $End_of_Input;
 
 $defheader = _("DEFINE") - _("IDENTIFIER") - $Extends
   >> sub { ["DEFINITION", @_[1,2] ]};
@@ -248,14 +246,23 @@ $drawable =
                   };
          };
 
+{
+  my %already_loaded;
+
 $require_decl = _("REQUIRE") - _("STRING") - _("TERMINATOR")
   >> sub { my $req_file = $_[1];
+           return undef if $already_loaded{$req_file}++;
            warn "Requiring '$req_file'\n";
-           unless (do_file($req_file)) {
-             lino_error("Failed while loading '$req_file'");
+           my $file = lib_resolve($req_file);
+           unless ($file) {
+             lino_error("Couldn't find library file '$req_file'");
+           }
+           unless (do_file($file)) {
+             lino_error("Failed while loading '$file'");
            }
            return undef;
          };
+}
 
 $expression = operator($Term,
                        [_('OP', '+'), sub { Expression->new('+', @_) } ],
@@ -455,6 +462,7 @@ sub expression_to_constraints {
 #}
 
 do_file($FILE);
+$ROOT_TYPE->draw();
 
 sub do_file {
   my $file = shift;
@@ -467,6 +475,15 @@ sub do_file {
   return 1 unless $@;
   print "Failed: \n";
   Parser::display_failures($@);
+  return;
+}
+
+sub lib_resolve {
+  my $f = shift;
+  for my $d (@search_path) {
+    return "$d/$f" if -r "$d/$f";
+    return "$d/$f.lino" if -r "$d/$f.lino";
+  }
   return;
 }
 
