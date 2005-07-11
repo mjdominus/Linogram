@@ -1,0 +1,4 @@
+
+define point {
+  number x, y;
+}

@@ -1,0 +1,11 @@
+
+require "line";
+
+define hline  extends line {
+  number y, length;
+  constraints {
+    start.y = end.y = y;
+    start.x + length = end.x;
+  }
+}
+

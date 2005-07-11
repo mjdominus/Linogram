@@ -1,0 +1,10 @@
+
+require "line";
+define vline  extends line {
+  number x, length;
+  constraints {
+    start.x = end.x = x;
+    start.y + length = end.y;
+  }
+}
+
