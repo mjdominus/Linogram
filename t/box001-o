@@ -1,0 +1,4 @@
+LINE from (0, 0) to (0, 2)
+LINE from (0, 2) to (3, 2)
+LINE from (0, 0) to (3, 0)
+LINE from (3, 0) to (3, 2)

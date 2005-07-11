@@ -1,0 +1,11 @@
+
+require "box";
+
+box B;
+
+constraints {
+  B.ht = 2;
+  B.wd = 3;
+  B.nw = (0,0);
+}
+
