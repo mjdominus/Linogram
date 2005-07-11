@@ -8,7 +8,7 @@ if (@ARGV) {
   @inputs = @ARGV;
 } else {
   opendir  my ($t), $dir or die "opendir $dir: $!";
-  @inputs = sort grep /-i$/, readdir $t;
+  @inputs = sort grep !/^\./, grep /-i$/, readdir $t;
 }
 
 print "1..", scalar(@inputs), "\n";
@@ -55,6 +55,7 @@ for my $infile (@inputs) {
     print "# $input -> $output\n";
     print map "# $_\n", @$dr;
     print "not ok $N\n";
+    push @BAD, $infile;
   } else {
     open my($z), ">", $stamp;
     utime undef, undef, $stamp;
@@ -62,4 +63,6 @@ for my $infile (@inputs) {
   }
 }
 
-
+if (@BAD) {
+  print join "\n", map("# $_", "Failed:", @BAD), "";
+}
