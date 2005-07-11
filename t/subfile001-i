@@ -1,5 +1,5 @@
 
-require "t/001-i";
+require "point";
 
 point p;
 constraints { p = (1, 2); }
