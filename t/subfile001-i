@@ -1,0 +1,12 @@
+
+require "t/001-i";
+
+point p;
+constraints { p = (1, 2); }
+
+draw { &dump_hash; }
+
+__END__
+
+require "testutils.pl";
+
