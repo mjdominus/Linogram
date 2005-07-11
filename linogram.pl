@@ -41,28 +41,34 @@ use Expression;
 use Stream 'drop';
 
 my $FILE = shift || die "Usage: $0 [-Pperllib] filename";
-warn "Using $FILE\n";
-open INPUT, "<", $FILE or die $!;
 
 my $ROOT_TYPE = Type->new('ROOT');
 my %TYPES = ('number' => Type::Scalar->new('number'),
 #             'string' => Type::Scalar->new('string'),
              'ROOT'   => $ROOT_TYPE,
             );
-my $input = sub { read INPUT, my($buf), 8192 or return; $buf };
 
 my @keywords = map [uc($_), qr/\b$_\b/],
-  qw(constraints define extends draw param);
+  qw(constraints define extends draw param require);
 
-my $tokens = 
+sub lino_lexer {
+  my $input = shift;
   i2s(make_lexer($input,
-                 @keywords,
                  ['ENDMARKER',  qr/__END__.*/s,
                   sub {
                     my $s = shift;
                     $s =~ s/^__END__\s*//;
                     ['ENDMARKER', $s]
                   } ],
+                 ['STRING', qr/" [^"]+ "/x,
+                   sub {
+                     my $s = shift;
+                     $s =~ s/^"//;
+                     $s =~ s/"$//;
+                     ['STRING', $s];
+                   }
+                 ],
+                 @keywords,
                  ['IDENTIFIER', qr/[a-zA-Z_]\w*/],
                  ['NUMBER', qr/(?: \d+ (?: \.\d*)?
                                | \.\d+)
@@ -79,6 +85,7 @@ my $tokens =
                  ['TERMINATOR', qr/;\n*/],
                  ['WHITESPACE', qr/\s+/, sub { "" }],
                  ));
+}
 
 
 ################################################################
@@ -86,7 +93,7 @@ my $tokens =
 my ($atom, $base_name, $constraint, $constraint_section, $declaration,
     $declarator, $defheader, $definition, $extends, $draw_section,
     $drawable, $expression, $name, $param_spec,
-    $perl_code, $program, $term, $tuple, $type, );
+    $perl_code, $program, $require_decl, $term, $tuple, $type, );
 
 my $Atom               = parser { $atom->(@_) };
 my $Base_name          = parser { $base_name->(@_) };
@@ -104,6 +111,7 @@ my $Name               = parser { $name->(@_) };
 my $Param_Spec         = parser { $param_spec->(@_) };
 my $Perl_code          = parser { $perl_code->(@_) };
 my $Program            = parser { $program->(@_) };
+my $Require_decl       = parser { $require_decl->(@_) };
 my $Term               = parser { $term->(@_) };
 my $Tuple              = parser { $tuple->(@_) };
 my $Type               = parser { $type->(@_) };
@@ -111,11 +119,11 @@ my $Type               = parser { $type->(@_) };
 @N{$Atom, $Base_name, $Constraint, $Constraint_section, $Declaration,
     $Declarator, $Defheader, $Definition, $Extends, $Draw_section,
     $Drawable, $Expression, $Name, $Param_Spec,
-    $Perl_code, $Program, $Term, $Tuple, $Type} =
+    $Perl_code, $Program, $Require_decl, $Term, $Tuple, $Type} =
 qw(atom base_name constraint constraint_section declaration 
    declarator defheader definition extends draw_section 
    drawable expression name param_spec 
-   perl_code program term tuple type);
+   perl_code program require_decl term tuple type);
 
 ################################################################
 
@@ -172,6 +180,7 @@ $declaration = option(_("PARAM")) - $Type
                         }
              | $Constraint_section 
              | $Draw_section
+             | $Require_decl
 #  | error(_("RBRACE"), $Declaration)
              ;
 
@@ -229,6 +238,15 @@ $drawable =
                     REF => $ref,
                     NAME => $_[1],
                   };
+         };
+
+$require_decl = _("REQUIRE") - _("STRING") - _("TERMINATOR")
+  >> sub { my $req_file = $_[1];
+           warn "Requiring '$req_file'\n";
+           unless (do_file($req_file)) {
+             lino_error("Failed while loading '$req_file'");
+           }
+           return undef;
          };
 
 $expression = operator($Term,
@@ -306,6 +324,7 @@ sub add_declarations {
   my ($type, @declarations) = @_;
 
   for my $declaration (@declarations) {
+    next unless defined $declaration;
     my $decl_kind = $declaration->{WHAT};
     my $func = $add_decl{$decl_kind} || $add_decl{DEFAULT};
     $func->($type, $declaration);
@@ -409,10 +428,20 @@ sub expression_to_constraints {
 #  print ">> @$token\n";
 #}
 
-my ($result, $leftover) = eval { $program->($tokens) };
-if ($@) {
+do_file($FILE);
+
+sub do_file {
+  my $file = shift;
+  warn "Using $file\n";
+  open my($INPUT), "<", $file or die "$file: $!";
+  my $input = sub { read $INPUT, my($buf), 8192 or return; $buf };
+  my $tokens = lino_lexer($input);
+  my ($result, $leftover) = eval { $program->($tokens) };
+  warn "Done with '$file'\n";
+  return 1 unless $@;
   print "Failed: \n";
   Parser::display_failures($@);
+  return;
 }
 
 sub pic_error {
