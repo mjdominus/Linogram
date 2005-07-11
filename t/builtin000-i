@@ -1,0 +1,8 @@
+
+number s0;
+
+constraints {
+  s0 = sin(0);
+}
+
+draw { &dump_hash; }

@@ -1,0 +1,24 @@
+
+* a = b = c;
+
+o param variables
+
+o proper handling of inconsistent equations
+
+o multiplied types
+
+o more tests
+
+o declaration to pause and load a linogram library file
+
+o declaration to require a Perl file
+  (or can this be taken care of just by putting 
+        require "foo.pl";  
+   into the __END__ section?)
+
+o   type name = EXPR
+   equivalent to
+        type name;
+        constraints { name = EXPR; }
+
+* Builtin functions - sin(), cos(), sqrt()

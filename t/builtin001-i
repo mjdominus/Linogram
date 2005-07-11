@@ -1,0 +1,24 @@
+
+number s0, s90, s180, s270, s360;
+number c0, c90, c180, c270, c360;
+number s30, c60;
+number sn30, cn60;
+
+constraints {
+  s0 = sin(0);
+  c0 = cos(0);
+  s90 = sin(90);
+  c90 = cos(90);
+  s180 = sin(180);
+  c180 = cos(180);
+  s270 = sin(270);
+  c270 = cos(270);
+  s360 = sin(360);
+  c360 = cos(360);
+  s30 = sin(30);
+  c60 = cos(60);  
+  sn30 = sin(-30);
+  cn60 = cos(-60);  
+}
+
+draw { &dump_hash; }

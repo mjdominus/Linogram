@@ -20,6 +20,13 @@ $|=1;
 use lib 'lib';
 use strict;
 
+my $PI = atan2(0, -1);
+
+my %builtin = (sin => sub { sin($_[0] * $PI / 180) },
+               cos => sub { cos($_[0] * $PI / 180) },
+               sqrt => sub { sqrt($_[0]) },
+              );
+
 while (@ARGV && $ARGV[0] =~ /^-(\w)/) {
   my $opt = $1;
   shift;
@@ -91,8 +98,8 @@ sub lino_lexer {
 ################################################################
 
 my ($atom, $base_name, $constraint, $constraint_section, $declaration,
-    $declarator, $defheader, $definition, $extends, $draw_section,
-    $drawable, $expression, $name, $param_spec,
+    $declarator, $defheader, $definition,$ drawable, $draw_section, 
+    $expression, $extends, $funapp, $name, $param_spec,
     $perl_code, $program, $require_decl, $term, $tuple, $type, );
 
 my $Atom               = parser { $atom->(@_) };
@@ -107,6 +114,7 @@ my $Draw_section       = parser { $draw_section->(@_) };
 my $Drawable           = parser { $drawable->(@_) };
 my $Expression         = parser { $expression->(@_) };
 my $Extends            = parser { $extends->(@_) };
+my $Funapp             = parser { $funapp->(@_) };
 my $Name               = parser { $name->(@_) };
 my $Param_Spec         = parser { $param_spec->(@_) };
 my $Perl_code          = parser { $perl_code->(@_) };
@@ -118,11 +126,11 @@ my $Type               = parser { $type->(@_) };
 
 @N{$Atom, $Base_name, $Constraint, $Constraint_section, $Declaration,
     $Declarator, $Defheader, $Definition, $Extends, $Draw_section,
-    $Drawable, $Expression, $Name, $Param_Spec,
+    $Drawable, $Expression, $Funapp, $Name, $Param_Spec,
     $Perl_code, $Program, $Require_decl, $Term, $Tuple, $Type} =
 qw(atom base_name constraint constraint_section declaration 
    declarator defheader definition extends draw_section 
-   drawable expression name param_spec 
+   drawable expression funapp name param_spec 
    perl_code program require_decl term tuple type);
 
 ################################################################
@@ -148,10 +156,10 @@ $definition = labeledblock($Defheader, $Declaration)
      my $new_type;
 
      if (exists $TYPES{$name}) {
-       pic_error("Type '$name' redefined");
+       lino_error("Type '$name' redefined");
      }
      if (defined $extends && ! defined $extended_type) {
-       pic_error("Type '$name' extended from unknown type '$extends'");
+       lino_error("Type '$name' extended from unknown type '$extends'");
      }
      $new_type = Type->new($name, $extended_type);
 
@@ -167,7 +175,7 @@ $declaration = option(_("PARAM")) - $Type
              - commalist($Declarator) - _("TERMINATOR")
                  >> sub { my ($is_param, $type, $decl_list) = @_;
 			  unless (exists $TYPES{$type}) {
-			    pic_error("Unknown type name '$type' in declaration '@_'\n");
+			    lino_error("Unknown type name '$type' in declaration '@_'\n");
 			  }
                           for (@$decl_list) {
                             $_->{TYPE} = $type;
@@ -259,12 +267,23 @@ $term = operator($Atom,
                        [_('OP', '/'), sub { Expression->new('/', @_) } ],
                 );
 
-$atom = $Name
+$atom = $Funapp
+      | $Name
       | $Tuple
       | lookfor("NUMBER", sub { Expression->new('CON', $_[0][1]) })
       | _('OP', '-') - $Expression
             >> sub { Expression->new('-', Expression->new('CON', 0), $_[1]) }
       | _("LPAREN") - $Expression - _("RPAREN") >> sub {$_[1]};
+
+$funapp = $Name - _("LPAREN") - $Expression - _("RPAREN")
+            >> sub { 
+              my $name = $_[0][1];
+              unless (exists $builtin{$name}) {
+                lino_error("Unknown function '$name'");
+              }
+              Expression->new('FUN', $name, $_[2]) 
+            }
+        ;
 
 $name = $Base_name - star(_("DOT") - _("IDENTIFIER") >> sub { $_[1] })
             >> sub { Expression->new('VAR', join(".", $_[0], @{$_[1]})) }
@@ -284,7 +303,7 @@ $tuple = _("LPAREN")
                { map { $axis[$_] => $explist->[$_] } (0 .. $N-1) }
              ];
     } else {
-      pic_error("$N-tuples are not supported\n");
+      lino_error("$N-tuples are not supported\n");
     }
   } ;
 
@@ -292,7 +311,7 @@ $tuple = _("LPAREN")
 $type = lookfor("IDENTIFIER",
                 sub {
 #                  print "In lookfor (@{$_[0]})\n";
-                  exists($TYPES{$_[0][1]}) || pic_error("Unrecognized type '$_[0][1]'");
+                  exists($TYPES{$_[0][1]}) || lino_error("Unrecognized type '$_[0][1]'");
                   $_[0][1];
                 }
                );
@@ -309,14 +328,14 @@ $perl_code = _("ENDMARKER") > sub { warn "Evaling perl code $_[0]\n";
 sub check_types {
   my ($a, $b) = @_;
   $a->meet($b) or
-    pic_error("Can't equate type ", $a->name, " with type ", $b->name, "; aborting");
+    lino_error("Can't equate type ", $a->name, " with type ", $b->name, "; aborting");
 }
 
 my %add_decl = ('DECLARATION' => \&add_subobj_declaration,
                 'CONSTRAINTS' => \&add_constraint_declaration,
                 'DRAWABLES' => \&add_draw_declaration,
                 'DEFAULT' =>  sub {
-                  pic_error("Unknown declaration kind '$[1]{WHAT}'");
+                  lino_error("Unknown declaration kind '$[1]{WHAT}'");
                 },
                );
 
@@ -363,13 +382,13 @@ sub add_draw_declaration {
     my $drawable_type = $d->{WHAT};
     if ($drawable_type eq "NAMED_DRAWABLE") {
       unless ($type->has_subchunk($d->{NAME})) {
-        pic_error("Unknown drawable chunk '$d->{NAME}'");
+        lino_error("Unknown drawable chunk '$d->{NAME}'");
       }
       $type->add_drawable($d->{NAME});
     } elsif ($drawable_type eq "FUNCTIONAL_DRAWABLE") {
       $type->add_drawable($d->{REF});
     } else {
-      pic_error("Unknown drawable type '$type'");
+      lino_error("Unknown drawable type '$type'");
     }
   }
 } 
@@ -390,6 +409,13 @@ sub expression_to_constraints {
     return Value::Chunk->new_from_var($name, $context->subchunk($name));
   } elsif ($op eq 'CON') {
     return Value::Constant->new($s[0]);
+  } elsif ($op eq 'FUN') {
+    my ($name, $arg_exp) = @s;
+    my $arg = expression_to_constraints($context, $arg_exp);
+    unless ($arg->kindof eq "CONSTANT") {
+      lino_error("Argument to function '$name' is not a constant");
+    }
+    return Value::Constant->new($builtin{$name}->($arg->value));
   } elsif ($op eq 'TUPLE') {
     my %elements;
     for my $k (keys %{$s[0]}) {
@@ -412,7 +438,7 @@ sub expression_to_constraints {
   if (defined $meth) {
     return $e1->$meth($e2);
   } else {
-    pic_error("Unknown operator '$op' in AST");
+    lino_error("Unknown operator '$op' in AST");
   }
 }
 
@@ -444,7 +470,7 @@ sub do_file {
   return;
 }
 
-sub pic_error {
+sub lino_error {
   die @_;
 }
 
@@ -453,7 +479,7 @@ sub check_declarator {
   for my $pspec (@{$declarator->{PARAM_SPECS}}) {
     my $name = $pspec->{NAME};
     unless ($type->has_subchunk($name)) {
-      pic_error("Declaration of '$declarator->{NAME}' specifies unknown parameter '$name' for type '$type->{N}'\n");
+      lino_error("Declaration of '$declarator->{NAME}' specifies unknown parameter '$name' for type '$type->{N}'\n");
     }
   }
 }

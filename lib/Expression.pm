@@ -49,7 +49,6 @@ sub op {
 ################################################################
 
 
-# Rename this to "Expression" when you rename the othes to "Value"
 package Expression; 
 
 my %eval_op = ( '+' => sub { $_[0] + $_[1] },
@@ -58,6 +57,7 @@ my %eval_op = ( '+' => sub { $_[0] + $_[1] },
 		'/' => sub { $_[0] / $_[1] },
 		'CON' => "special case",
 		'VAR' => "special case",
+		'FUN' => "special case",
 	      );
 
 sub new {
