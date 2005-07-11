@@ -98,7 +98,7 @@ sub lino_lexer {
 ################################################################
 
 my ($atom, $base_name, $constraint, $constraint_section, $declaration,
-    $declarator, $defheader, $definition,$ drawable, $draw_section, 
+    $declarator, $defheader, $definition, $drawable, $draw_section, 
     $expression, $extends, $funapp, $name, $param_spec,
     $perl_code, $program, $require_decl, $term, $tuple, $type, );
 

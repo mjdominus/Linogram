@@ -329,3 +329,72 @@ the multiplier val, effectively translating
         draw { e[1]; e[2]; e[3] }               # 1,2,3 are EXPRs
 
 
+----------------------------------------------------------------
+
+20050709
+
+What should we do if the equations are inconsistent?
+
+Current behavior of returning immediately is dead wrong.
+
+We could just abort, of course.
+
+But another alternative is to try to salvage what we can.  For
+example:
+
+        P = Q;
+        P.x = 1;
+        P.y = 2;
+        Q.y = 3;
+
+is inconsistent, but we can still deduce P.x = Q.x = 1; only the y
+parts are broken.
+
+Here's one thing we might do.  Construct the graph G whose vertices
+are variables and where u and v are connected if they appear in the
+same equation.  Consider the connected components of this graph.  In
+the example above, there are two connected components, one containing
+the x'es and the other the y's.  You can solve the connected
+components separately and discard any components that are
+inconsistent, retaining the others.  This will also be faster than
+solving the system as a whole.
+
+Your original idea was that if an equation turns out to be
+inconsitent, that taints all the variables in it, and all equations
+with those variables become tainted, and the taint spreads, etc.; then
+you discard the tainted equations.  This is equivalent to the conncted
+components thing above.
+
+In this idea, we would go:
+
+        P.x = Q.x
+        P.y = Q.y  
+        P.x = 1
+        P.y = 2
+        Q.y = 3
+
+        P.x = Q.x
+        P.y = Q.y  
+        Q.x = 1
+        P.y = 2
+        Q.y = 3
+        
+        P.x = Q.x
+        P.y = Q.y  
+        Q.x = 1
+        Q.y = 2
+        Q.y = 3
+
+        P.x = 1
+        P.y = Q.y  
+        Q.x = 1
+        Q.y = 2
+        Q.y = 3
+
+Then we would discover that Q.y was inconsistent.  This would taint
+all the Q.y and all the P.y equations, but the others would remain:
+
+        P.x = 1
+        Q.x = 1
+
+
