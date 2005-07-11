@@ -1,0 +1,693 @@
+
+A graphic object has a list of control variables and linear relations
+between them.  When we instantiate it, we create a bunch of new actual
+variables and bind them to the control variables.  It also has a
+drawing routine associated with it.
+
+The DRAWING ITSELF is a large compound graphic object.  To render it,
+we will call its 'draw' method.
+
+The control variables are themselves graphic objects.
+The fundamnetal graphic object is just a number.  A point is two
+numbers.  A line is two points and a drawing routine.
+Properties like line color can be unconstrained control variables.
+
+        define point:
+          number x, y;
+
+        define line:
+          point s, e;   # start and end
+          number m;     # slope
+          draw: <PRIMITIVE>
+
+Problem with slope:  it's nonlinear because m = (s.y-e.y)/(s.x-e.x)
+
+        define horizline is a line:
+          constraints: s.y = e.y; 
+
+        define vertline is a line:
+          constraints: s.x = e.x; 
+
+        define rectangle:
+          point n, s, e, w, ne, nw, se, sw, c;
+          number h, w;
+          constraints:
+             nw.y = n.y = ne.y;
+             sw.y = s.y = se.y;
+              w.y = c.y =  e.y;
+             sw.x = w.x = nw.x;
+             se.x = e.x = ne.x;
+              s.x = c.x =  n.x;
+              n.y = s.y + h;
+              e.x = w.x + w;
+              n.y = c.y + h/2;
+              e.x = c.x + w/2;
+
+Better syntax:
+
+        define rectangle:
+          point n, s, e, w, ne, nw, se, sw, c;
+          number h, w;
+          constraints:
+             nw = c + (-w/2,  h/2)
+             sw = c + (-w/2, -h/2)
+             ne = c + ( w/2,  h/2)
+             se = c + ( w/2, -h/2)
+              n = c + (   0,  h/2)
+              s = c + (   0, -h/2)
+              e = c + ( w/2,    0)
+              w = c + (-w/2,    0)
+
+Points need to be special because there's a special syntax for them :
+(x, y).  But also they're special because they're targets of 'at':
+
+        rectangle with .s at ...
+
+
+It seems that it ought to be possible to specify a rotation; for
+example
+
+        rectangle ... rotated 37 degrees with .s at ...
+
+because as long as the rotation is a known constant, that just
+introduces a new set of variables, x' and y', which relate to the
+global x and y via another set of linear equations.
+
+        define circle:
+          point n, s, e, w, ne, nw, se, sw, c
+          number r, d
+          local z = sqrt(2)/2
+          constraints:
+             nw = c + z*(-r,  r)
+             sw = c + z*(-r, -r)
+             ne = c + z*( r, r)
+             se = c + z*( r, -r)
+              n = c +   ( 0,  r)
+              s = c +   ( 0, -r)
+              e = c +   ( r,  0)
+              w = c +   (-r,  0)
+              d = 2*r
+
+        define disc {
+          point n, s, e, w, ne, nw, se, sw, c
+          number r, d, fill, linethick
+          local z = sqrt(2)/2
+          constraints {
+             nw = c + z*(-r,  r)
+             sw = c + z*(-r, -r)
+             ne = c + z*( r, r)
+             se = c + z*( r, -r)
+              n = c +   ( 0,  r)
+              s = c +   ( 0, -r)
+              e = c +   ( r,  0)
+              w = c +   (-r,  0)
+              d = 2*r
+          }
+        }
+
+A 'text' will be like a rectangle; that way you can easily fit another
+rectangle around it.
+
+A program looks like
+
+        A = rectangle(h=12, e=(...), n.x = ...)
+        B = rectangle(h=12, w=A.e)
+        B.s.x = A.n.x
+        rectangle(h=B.h/2)
+
+which is essentialy a series of constraints.  
+
+is rectangle(...) an expression?  So it would seem.  What does
+
+        rectangle(...) = ... 
+
+mean then, as a constraint?  I guess it means that (a) types must
+match on both sides of the equals sign, and (b) constraints are
+inferred from the equality of the two sides as usual.  In particular,
+
+        rectangle(a,b,c) = rectangle(d,e,f)
+
+means that these are *the same* rectangle, and to infer all the
+constraints possible from this.  So
+
+        rectangle(h=3) = rectangle(h=4)
+
+should produce a constraint violation.
+
+In this world, (a, b) is just an abbreviation for point(x=a, y=b).
+
+Are the arguments to a type constructor arbitrary constraints?  For
+example:
+
+        rectangle(z=alpha*k, 1+2=3)?
+
+These are just silly.  But what about
+
+        rectangle(h*2=w+3)
+
+sure, why not?  But how about
+
+        retangle(ne=point(2,3), h = circle(c=origin).x)
+
+sure, why not?
+The (expression, expression) notation is short for
+"point(x=expression, y=expression)".
+
+
+        
+Maybe separate productions for scalar and tuple expressions?
+Because
+
+        x*(a,b) 
+
+is legal when x is a scalar, but not when x is a tuple.  Or maybe take
+care of this at the semantic level with types?  You'll have to do that
+anyway because when you see x*y there's no a priori way to know that x
+and y aren't points.
+
+Maybe * should just invoke the multi-dispatched version of
+multiplication for whatever its arguments are.  For point*point, it's
+undefined.  Similarly for number/point.
+
+
+Can we define rectangle in terms of primitives?  Maybe like this?
+
+        define rectangle:
+          point n, s, e, w, ne, nw, se, sw, c;
+          horizline top, bot
+          vertline left, right
+          number h, w;
+          constraints:
+             left = right + (w, 0)
+             top  = bot   + (0, h)
+             nw = left .start = top.start
+             sw = left .end   = bot.start
+             ne = right.start = top.end
+             se = right.end   = bot.end
+              
+              n = (nw+ne)/2
+              s = (sw+se)/2
+              w = (nw+sw/2
+              e = (ne+se)/2
+              c = (n+s)/2
+
+And perhaps the fact that the rectangle contains two horizlines and
+two vertlines means that these four objects are drawn whenever the
+rectangle is.  (number and point have null graphics by default.)
+
+Suppose I wanted to define a three-sides rectangle whose left side is
+invisible.  What's the syntax for that?  Maybe:
+
+        define rectangle3:
+          ...
+          vertline right
+          local left = vertline(pattern=invisible)
+          ...
+
+But if 'left' is local, doesn't that mean it can't be referred to
+outside of the defintion, so that 
+
+        z = rectangle3;
+        z.left.start = ...
+
+becomes illegal?  Maybe you just need a counterpart to 'local' that
+isn't local:
+
+        define rectangle3:
+          ...
+          vertline right
+          control left = vertline(pattern=invisible)
+          ...
+
+So 
+
+        vertline right
+
+is just the same as
+
+        control right = vertline()
+
+
+
+Instead of 'box with .nw at (4, 3)', we have
+
+        box(nw=(4,3))
+
+Instead of 'box wid 3 ht 2 at (4, 3)' we have
+
+        box(w=3, h=2, c=(4,3))
+
+This introduces a new box, say box1, and its associated variables,
+box1.h, box1.w, etc.; variables like box1.c then imply box1.c.x and
+box1.c.y.  The constraints then imply some new equations:
+
+        box1.w = 3
+        box1.h = 2
+        box1.c.x = 4
+        box1.c.y = 3
+
+which get added to the other equations that are contributed by the box
+definition:
+
+             box1.nw.x = box1.c.x + -w/2
+             box1.nw.y = box1.c.y +  h/2
+
+etc.
+
+Then the equations are solved.  Indeterminate parameters are left
+undef, and the drawing routines are called.  The argument to a drawing
+routine is a hash of the control variables and their values.    The
+drawing routine for 'box' demands nw, ne, sw, and se; if any are
+undefined it issues an error message.  Otherwise it draws the
+appropriate lines.
+
+How to spefiy drawing routines?  Two options. 
+One:
+
+        define box { 
+          ...
+          draw {
+            line(start=nw, end=ne)
+            line(start=sw, end=se)
+            line(start=nw, end=sw)
+            line(start=ne, end=se)
+          }
+        }
+
+Two:
+
+        define box {
+          ...
+          draw &draw_box
+        }
+        ...
+        __END__
+
+        sub draw_box {
+          PERL CODE
+        }
+
+
+
+----------------------------------------------------------------
+
+What methods can be called on drawing objects?
+
+->draw
+->add
+->controls      (list of control names)
+->control       (value of a single control)
+->control_hash  (hash mapping control names to values)
+->name          (set/get name)
+->owner         (set/get owner name)
+->qualify       (properly qualify a control name)
+->constraints   (return system of constraint equations
+                 each variable is fully qualified)
+->constrain     (add another constraint?)
+
+Each rectangle object should inherit from a rectangle class object.
+
+->new(classname, etc.)
+->instantiate
+
+
+----------------------------------------------------------------
+
+Question: How to represent variable names?  Consider
+
+        define foo {
+          bar b
+          number w
+          constraints {
+            b.w = w
+          }
+        }
+
+        define bar {
+          number w, e;
+          constraints { w = e+1; }
+        }
+          
+'b' here is represented by a Drawable::Subobject object.  It has a
+name ('b') and a constraint list.  What's in the constraint list?
+
+Maybe there's no problem, because object need only refer to variables
+in subobjects, never in superobjects.  So the 'bar' constraint is
+
+        w = e+1
+
+and when this is translated up to foo, we get
+
+        b.w = w
+        b.w = b.e + 1
+
+so no difficulty.  If parent object asks about the constrints in its
+subobjects, it can qualify ALL of the variables it finds in ALL the
+constraints.
+
+(Exception: A special global variable space, recognizable because the
+names all begin with '.')
+
+----------------------------------------------------------------
+
+TODO:
+
+* Object classes should be able to be subclasses of others.
+  A subclass might add more variables or constraints.
+  For example, you could define an hline as a line where start.y = end.y.
+
+  Have a root object which has properties like color, dottedness, and
+  linethickness. 
+
+  When an type inherits from another what happens to the parent draw
+  routines?   
+
+* Objects should support a linear translation matrix.  Then you could
+  say you want a triangle, but rotated 30 degrees.  
+
+* Objects needn't be two dimensional.  You could define a point3
+  object which has x, y, and z, and then line3, plane3, tertrahedron,
+  etc.  The drawing procedures for these would generate a
+  stereographic projection or a perspective drawing on whatever.  
+  To do hidden surface removal, the 'drawing' routines actually 'render'
+  the objects into a symbolic space which is then used to generate a
+  ray trace.
+
+* What about arrows?  You can't specify the corners of the arowhead
+  with linear constraints.  The solution you came up with on the steps
+  of the Franklin Institute is that they're defined by local
+  parameters.  
+
+  A local parameter is declared almost the same as a constraint:
+
+        point local ahl = EXPR, local ahr = EXPR;
+
+  But local parameters do not contribute constraints or equations.
+  Instead, after the equations are solved, the expressions are
+  evaluated and used to assign the parameter.  The local parameter is
+  then passed to the draw routine just like any other subobject.
+
+  Similarly a filled arrowhead has a local parameter that is a triangle
+  object.  
+
+* You need parameterized objects.  A parameter looks like a constraint
+  from the outside, but it *must* be specified when the object is
+  instantiated; if not, then it defaults.    It is then available for
+  use in constraint coefficients, and it's also passed to the draw
+  routines.    
+
+  This is how to handle properties like arrowhead length, color, fill, etc.
+
+* Similarly you can handle 'cut' this way.
+
+        B = circle(...)
+        line(start=A, end=B.center, cut=B.radius)
+
+  and the 'cut' parameter is just passed to the draw routine, which
+  can use trigonometry or whatever to cut off the line at the right place.
+
+* Is it worth creating something like
+
+        define polygon {
+          point v[n], c[n];
+          constraints {
+            c[j] = (v[j]+v[j+1])/2 for j in 1 .. n-1
+            c[n] = (v[n]+v[0])/2 
+          }
+        }
+
+  where n is a parameter (must be specified at instantiation time) and
+  'point v[n]' creates a series of points with names like v_1, v_2,
+  ... 
+
+  I think you originally thought of this in connection with splines.
+
+* Maybe allow
+
+        line with start Z end.x 12 thickness 3 
+
+  as an alternative syntax for
+
+        line(start=Z, end.x=12, thickness=3)
+
+  ?  Eh, it seems like not much is gained.
+
+
+
+
+* What to do about expressions generally?
+
+  There are several phases. 
+
+        1. The expression is parsed and some
+           sort of AST is built.  
+
+        2. Parameters are evaluated and defaulted; parameter values
+           are inserted into the AST.  
+
+        3. The expression is turned into an equation.  Constants are
+           folded.  Raise a fatal error if it the expression is nonlinear.
+
+        4. We solve the equation to determine the constraints.
+
+        5. Local variables are evaluated using parameter and
+           constraint values.  These expressions need not be linear.
+
+  To accomplish all this we need a clear distinction between
+  parameters, constraints, and local variables.  For example:
+
+        define arrow derives line {
+          param number headangle = 20, headlen = 0.3;   
+          point start, end, center;   #  Inherited from 'line'
+          constraints {
+            center = (start+end)/2;   #  Inherited from 'line'
+          }
+          local number dir = atan2(end.y-start.y, end.x-start.x);
+          local point ahl = end + polar(headlen, -dir-headangle);
+          local point ahr = end + polar(headlen, -dir+headangle);
+          draw {
+            line(start=start, end=end); 
+            line(start=end, end=ahl);
+            line(start=end, end=ahr);
+          }
+        }
+
+
+* To draw an object:
+
+  * Set up an environment which contains its parameter values
+
+  * Build constraint set from explicitly declared constraints,
+    subobject constraints, type-induced constraints, and parent object
+    constraints
+
+  * Substitute parameter values into constraints; fold constants
+
+  * Solve constraint equations; add solutions to environment
+
+  * Evaluate local variable expressions; add results to environment
+
+  * Execute drawables:
+    * Functions get called with environment
+    * Drawable objects get invoked recursively with indicated parameters
+    * Subobjects get invoked recursively with environment subset
+================================================================
+
+What does an object contain?
+* Type
+* Additional constraints
+* Environment
+* Subobject list (list of objects)
+
+What does a type contain?
+* N: Type name
+* P: Parent type
+* C: Constraints
+* E: Parameters with defaults
+* L: Local variables with initializers
+* D: Drawable list
+* O: Subobject list (list of types)
+
+================================================================
+
+Consider
+
+        draw {
+          line(start.x = end.y);
+        }
+
+vs.
+        local number foo;  
+        draw {
+          line(start.x = foo);
+        }
+
+vs.
+        point end;
+        local number foo;  
+        draw {
+          line(start.x = end.y);
+        }
+
+How to tell in the third case whether we mean the parent or the child
+object's "end"?  Maybe the rule is
+
+        type(child-var = expression)
+
+, where all the items in 'expression' are evaluated at call time in
+the parent's environment Since these are parameters, that would make
+sense.  But it would rule out usages like
+
+        box(ht=wd)
+
+which would seem to be a shame.
+
+What's the type(constraints...) notation for anyway?  You could write
+the last as:
+
+        box foo; foo.ht = fo.wd;
+
+And you never used this in base.pic.  The only real problem is the
+lack of a 'self' abreviation.  You can solve the problem you
+introduced initialy by saying
+
+        line(self.start.x = end.y)
+        line(self.start.x = self.end.y)
+
+where 'end.y' refers to the parent object and 'self.end.y' to the
+child object.
+
+Maybe in the type(...) notation the ... should be restricted to
+parameters.  The ... items then have the form
+
+        child-parameter = parent-expression
+
+which is quite clear.  So no box(ht=wd); instead, box(thickness=7,
+color="red").
+
+20031010 But wait.  This is useless.  box(thickness=7, color="red")
+can't be drawn because we don't know where it goes.  It gets passed
+the environment, but it doesn't have a name, so it has no way to
+select any variables.  What's this for?
+
+The idea was that you would use it for this:
+
+        define arrow derives line {
+          param number headangle = 20, headlen = 0.3;   
+          point start, end, center;   #  Inherited from 'line'
+          constraints {
+            center = (start+end)/2;   #  Inherited from 'line'
+          }
+          local number dir = atan2(end.y-start.y, end.x-start.x);
+          local point ahl = end + polar(headlen, -dir-headangle);
+          local point ahr = end + polar(headlen, -dir+headangle);
+          draw {
+            line(start=start, end=end); 
+            line(start=end, end=ahl);
+            line(start=end, end=ahr);
+          }
+        }
+
+I think there's a simpler way:
+
+        define arrow derives line {
+          param number headangle = 20, headlen = 0.3;   
+          point start, end, center;   #  Inherited from 'line'
+          constraints {
+            center = (start+end)/2;   #  Inherited from 'line'
+          }
+          local number dir = atan2(end.y-start.y, end.x-start.x);
+          local point ahl = end + polar(headlen, -dir-headangle);
+          local point ahr = end + polar(headlen, -dir+headangle);
+          local line AHL; AHL.start=end; AHL.end=ahl;
+          local line AHR; AHR.start=end; AHR.end=ahr;
+          draw {
+            PARENT;
+            AHL; AHR;
+          }
+        }
+
+Here PARENT is a special symbol that says "draw the object from which
+this one was derived".
+
+We could get dotted arows like this:
+
+        define arrow derives line {
+*         param dotted;
+          param number headangle = 20, headlen = 0.3;   
+          point start, end, center;   #  Inherited from 'line'
+          constraints {
+            center = (start+end)/2;   #  Inherited from 'line'
+          }
+          local number dir = atan2(end.y-start.y, end.x-start.x);
+          local point ahl = end + polar(headlen, -dir-headangle);
+          local point ahr = end + polar(headlen, -dir+headangle);
+          local line AHL; AHL.start=end; AHL.end=ahl;
+          local line AHR; AHR.start=end; AHR.end=ahr;
+          draw {
+*           PARENT(dotted=dotted);
+            AHL; AHR;
+          }
+        }
+
+Or maybe the 'dotted' param should get passed by default.
+
+----------------------------------------------------------------
+
+1.  The c = line(start=a, end=b) notation seems like it would be a
+    handy abbreviation.  Perhaps an easy way to handle it is by making
+    the value of the expression line(...) a new line object with an
+    autogenerated name, say 'line1', together with a list of
+    constraints (line1.start = a, line1.end = b) and then treating
+    this as 'c = line1'.
+
+2. Then you can also use this handy anonymous line notation in draw
+   blocks:
+
+        draw {
+          line(start=a, end=b);
+        }
+
+now becomes equivalent to:
+
+        line line1;
+        line1.start = a;
+        line1.end = b;
+        draw {
+          line1;
+        }
+
+and the draw block is essentially a list of names of things to draw.
+This handles parameters of line1 just fine:
+
+        draw { line(color="red") }
+
+becomes
+
+        line line1;
+        line1.color = "red";
+        draw { line1 }
+
+Note that the containing object is free to do something like
+
+        param mycolor = "red";
+        line a, b;
+        a.color = mycolor;
+        b.color = mycolor;
+
+since parameters are just like other control variables except that
+they default if not otherwise specified, and then are eliminated from
+constraints wherever they appear.
+
+        box(ht=wd)
+
+means that the height of the new box is equal to the width of the
+_containing_ object, as if you had said
+
+        box box1;
+        box1.ht = wd;
+
+so if you really want to draw a square, you must use the other notation.
+
+This all means that the draw section as well as the constraints
+section must be examined for objects and constraints
