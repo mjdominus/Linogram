@@ -101,6 +101,7 @@ sub eqn_to_string {
     else { $c *= -1; push @left, "- $c$v" }
   }
   $left[0] =~ s/^\+ // if @left;
+  @left = "0" unless @left;
   my $right = -$e->{''};
   join(" ", @left) . " = $right";
 }
@@ -120,8 +121,6 @@ sub coefficient {
   $self->{$name} || 0;
 }
 
-sub clobber {
-}
 
 # Constant part of an equation
 sub constant {
@@ -197,6 +196,43 @@ sub equations {
   grep defined, @$self;
 }
 
+# Two equations are in the same group if they have a variable in common
+# We can treat each group as a separate system to be solved
+# This speeds up solving and improves handling of inconsistent equations
+sub equation_groups {
+  my $self = shift;
+  my @groups;
+
+  my %n; # Maps variable names to lists of equations that use them
+  for my $eq ($self->equations) {
+    for my $v ($eq->varlist) {
+      push @{$n{$v}}, $eq;
+    }
+  }
+
+  my %todo = map {$_ => $_} $self->equations;
+
+  while (%todo) {
+    my ($eq1) = values %todo; # select an equation arbitrarily
+    my @queue = $eq1; # list of equations that might be in the current group
+    my @group = ();  # Current group of equations
+    while (@queue) {
+      my $eq = pop @queue;
+      next unless delete $todo{$eq}; # skip if already did this eqn
+      push @group, $eq; # this equation is in the current group
+
+      # For each var in the current equation, add all equations 
+      # containing that var to the queue
+      for my $v ($eq->varlist) {
+        push @queue, @{delete $n{$v}};
+      }
+    }
+    push @groups, $self->new(@group);
+  }
+
+  return @groups;
+}
+
 # The value given to a specific variable by a system of equations,
 # or undef if it is indeterminate
 sub value_of {
@@ -218,35 +254,34 @@ sub discard {
 
 sub solve {
   my $self = shift;
-  $self->print_system;
+  my $DEBUG = $ENV{DEBUG_EQNS};
+  $self->print_system if $DEBUG;
   my $N = my @E = $self->equations;
   warn "Solving $N equations\n";
   for my $i (0 .. $N-1) {
     next unless defined $E[$i];
     my $var = $E[$i]->a_var;
-    my $AHA = $E[$i]->coefficient("l.c.y");
     for my $j (0 .. $N-1) {
       next if $i == $j;
       next unless defined $E[$j];
       next unless $E[$j]->coefficient($var);
-      $AHA ||= $E[$j]->coefficient("l.c.y");
-      $AHA = 0;
-      print "Reducing ", $E[$j]->eqn_to_string, 
+      print "Reducing ", $E[$j]->eqn_to_string,
         " with ", $E[$i]->eqn_to_string, "\n"
-          if $AHA;
+          if $DEBUG;
       $E[$j]->substitute_for($var, $E[$i]);
       print "  Result: ", $E[$j]->eqn_to_string, "\n"
-        if $AHA;
+        if $DEBUG;
       if ($E[$j]->is_inconsistent) { # print "*** Inconsistent equations\n";
-        return ;
+        warn "Equation " . $E[$i]->eqn_to_string . " failed.\n";
+        return;
       }
       elsif ($E[$j]->is_tautology) { 
         print "Equation $j is now a tautology\n"
-          if $AHA;
+          if $DEBUG;
         $self->discard($j);
         undef $E[$j]; 
       }
-      $self->print_system(),   print "----------\n" if $AHA;
+      $self->print_system(),   print "----------\n" if $DEBUG;
     }
   }
   $self->normalize;
@@ -305,13 +340,22 @@ sub apply {
 
 sub values {
   my $self = shift;
+  my $DEBUG = $ENV{DEBUG_EQNS};
   my %values;
   my @DIAG;
-  $self->solve;
-  for my $eqn ($self->equations) {
-    if (my $name = $eqn->defines_var) {
-      $values{$name} = -$eqn->constant;
-      push @DIAG, "$name = $values{$name}";
+  my @groups = $self->equation_groups;
+  warn "Equations fall into " . @groups . " groups.\n"
+    if $DEBUG;
+  for my $group (@groups) {
+    unless ($group->solve) {
+      warn "Inconsistent group\n" if $DEBUG;
+      next;
+    }
+    for my $eqn ($group->equations) {
+      if (my $name = $eqn->defines_var) {
+        $values{$name} = -$eqn->constant;
+        push @DIAG, "$name = $values{$name}";
+      }
     }
   }
   warn "* Solutions: ", join("\n", sort @DIAG), "\n";

@@ -1,0 +1,14 @@
+
+number a, b, c, d;
+
+constraints { 
+        a = b;
+        c = 2*d = 2;
+        b = a + 1;
+}
+
+draw { &dump_hash; }
+
+__END__
+
+require "testutils.pl";
