@@ -1,0 +1,8 @@
+
+require "point";
+
+define label extends point {
+        param string label;
+}
+
+draw { &put_string; }

@@ -1,0 +1,6 @@
+
+string s = "";
+
+__END__
+
+END { print "OK\n" }

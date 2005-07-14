@@ -1,0 +1,43 @@
+
+require "labelbox";
+require "point";
+require "line";
+
+labelbox F, add, mul, c32, c59, C;
+
+number hspace, vspace, boxht, boxwd;
+
+line i, j, k1, k2, l, m;
+
+point kk;
+
+constraints {
+     i.start = F.e;   i.end=add.nw;
+     j.start = add.e; j.end=c32.w;
+     l.start = c59.e; l.end=mul.sw;
+     m.start = mul.e; m.end=C.w;
+
+  boxht = 2; boxwd = boxht*2;
+
+  F.ht = boxht; F.wd = boxwd;
+  F.nw = (0, 0);
+
+  add = F   + ( hspace,  vspace);
+  c32 = add + ( hspace,  0);
+  mul = add + ( 0,       vspace);
+  C   = mul + ( hspace,  0);
+  c59 = mul + (-hspace,  vspace);
+
+  kk.x = add.sw.x - (hspace-boxwd) * 2/3;
+  kk.y = (add.sw.y + mul.nw.y)/2;
+  k1.start = kk;
+  k1.end = add.sw;
+  k2.start = kk;
+  k2.end = mul.nw;
+
+  hspace = 1 + boxwd;
+  vspace = 1 + boxht;
+}
+
+
+

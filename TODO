@@ -31,3 +31,11 @@ o Reorganize modules.  Put Value classes into Value.pm, etc.
 o Fix TODO and XXX items
 
 o string constants
+
+o require "foo", "bar", "baz";
+
+o object declarations or "extends" constructions that involve unknown
+  types might try to require a .lino file of the same name, and fail
+  only if none can be found
+
+o comments

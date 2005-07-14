@@ -58,7 +58,7 @@ my %builtins = (sin => sub { sin($_[0] * $PI / 180) },
                );
 
 my %TYPES = ('number' => Type::Scalar->new('number'),
-#             'string' => Type::Scalar->new('string'),
+             'string' => Type::Scalar->new('string'),
              'ROOT'   => $ROOT_TYPE,
             );
 
@@ -74,7 +74,7 @@ sub lino_lexer {
                     $s =~ s/^__END__\s*//;
                     ['ENDMARKER', $s]
                   } ],
-                 ['STRING', qr/" [^"]+ "/x,
+                 ['STRING', qr/" [^"\n]* "/x,
                    sub {
                      my $s = shift;
                      $s =~ s/^"//;
@@ -242,7 +242,7 @@ $draw_section = labeledblock(_("DRAW"), $Drawable)
 $drawable =
             $Name - _("TERMINATOR")
                 >> sub { return { WHAT => 'NAMED_DRAWABLE',
-				  NAME => $_[1],
+				  NAME => $_[0],
 				}
                          }
           | _("FUNCTION") - _("IDENTIFIER") - _("TERMINATOR")
@@ -259,7 +259,7 @@ $drawable =
 $require_decl = _("REQUIRE") - _("STRING") - _("TERMINATOR")
   >> sub { my $req_file = $_[1];
            return undef if $already_loaded{$req_file}++;
-           warn "Requiring '$req_file'\n";
+           warn "Requiring '$req_file'\n" if $verbose;
            my $file = lib_resolve($req_file);
            unless ($file) {
              lino_error("Couldn't find library file '$req_file'");
@@ -282,16 +282,17 @@ $term = operator($Atom,
                 );
 
 $atom = $Funapp
-      | $Name
+      | $Name > sub { Expression->new_var($_[0]) }
       | $Tuple
       | lookfor("NUMBER", sub { Expression->new('CON', $_[0][1]) })
+      | lookfor("STRING", sub { Expression->new('CON', $_[0][1]) })
       | _('OP', '-') - $Expression
             >> sub { Expression->new('-', Expression->new('CON', 0), $_[1]) }
       | _("LPAREN") - $Expression - _("RPAREN") >> sub {$_[1]};
 
 $funapp = $Name - _("LPAREN") - $Expression - _("RPAREN")
             >> sub { 
-              my $name = $_[0][1];
+              my $name = $_[0];
               unless (exists $builtins{$name}) {
                 lino_error("Unknown function '$name'");
               }
@@ -300,7 +301,7 @@ $funapp = $Name - _("LPAREN") - $Expression - _("RPAREN")
         ;
 
 $name = $Base_name - star(_("DOT") - _("IDENTIFIER") >> sub { $_[1] })
-            >> sub { Expression->new_var(join(".", $_[0], @{$_[1]})) }
+            >> sub { join(".", $_[0], @{$_[1]}) }
         ;
 
 $base_name = _"IDENTIFIER";
@@ -330,7 +331,7 @@ $type = lookfor("IDENTIFIER",
                 }
                );
 
-$perl_code = _("ENDMARKER") > sub { warn "Evaling perl code $_[0]\n"; 
+$perl_code = _("ENDMARKER") > sub { warn "Evaling perl code $_[0]\n" if $verbose;
                                     eval $_[0];
                                     die if $@; 
                                   };
@@ -435,7 +436,7 @@ sub do_file {
   my ($result, $leftover) = eval { $program->($tokens) };
   warn "Done with '$file'\n" if $verbose;
   return 1 unless $@;
-  print "Failed: \n";
+  print "$file failed: \n";
   Parser::display_failures($@);
   return;
 }

@@ -1,0 +1,9 @@
+
+require "box";
+require "label";
+
+define labelbox extends box {
+        label text(label="");
+        draw { top; left; bottom; right; text; }
+        constraints { text = c; }
+}

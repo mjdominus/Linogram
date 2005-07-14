@@ -19,10 +19,10 @@ sub diff_report {
   while (@$a && @$b) {
     my ($A, $B) = ($a->[0], $b->[0]);
     if ($A lt $B) {
-      push @r, "- $A";
+      push @r, "+ $A";
       shift @$a;
     } elsif ($A gt $B) {
-      push @r, "+ $B";
+      push @r, "- $B";
       shift @$b;
     } else {
       shift @$a;

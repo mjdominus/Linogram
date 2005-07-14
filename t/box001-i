@@ -9,3 +9,10 @@ constraints {
   B.nw = (0,0);
 }
 
+
+__END__
+require 'draw/dummy.pl';
+
+
+
+

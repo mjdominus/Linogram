@@ -1,0 +1,19 @@
+
+
+require "point";
+
+define label extends point {
+        param string label;
+}
+
+draw { &put_string; }
+
+
+label x(label = "foo") = (2, 3);
+
+draw { &dump_hash; }
+
+__END__
+
+sub put_string { }
+
