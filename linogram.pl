@@ -22,13 +22,6 @@ $|=1;
 use lib 'lib';
 use strict;
 
-my $PI = atan2(0, -1);
-
-my %builtin = (sin => sub { sin($_[0] * $PI / 180) },
-               cos => sub { cos($_[0] * $PI / 180) },
-               sqrt => sub { sqrt($_[0]) },
-              );
-
 while (@ARGV && $ARGV[0] =~ /^-(\w)/) {
   my $opt = $1;
   shift;
@@ -52,6 +45,16 @@ use Stream 'drop';
 my $FILE = shift || die "Usage: $0 [-Pperllib] filename";
 
 my $ROOT_TYPE = Type->new('ROOT');
+
+{
+  my $PI = atan2(0, -1);
+
+  $ROOT_TYPE->{B} = {sin => sub { sin($_[0] * $PI / 180) },
+                     cos => sub { cos($_[0] * $PI / 180) },
+                     sqrt => sub { sqrt($_[0]) },
+                    };
+}
+
 my %TYPES = ('number' => Type::Scalar->new('number'),
 #             'string' => Type::Scalar->new('string'),
              'ROOT'   => $ROOT_TYPE,
@@ -194,10 +197,12 @@ $declarator = _("IDENTIFIER")
             - option(_("LPAREN")  - commalist($Param_Spec) - _("RPAREN")
                      >> sub { $_[1] }
                     )
+            - option(_("EQUALS") - $Expression >> sub { $_[1] })
   >> sub {
     { WHAT => 'DECLARATOR',
       NAME => $_[0],
       PARAM_SPECS => $_[1],
+      EXPR => $_[2],
     };
   };
 
@@ -205,7 +210,7 @@ $param_spec = _("IDENTIFIER") - _("EQUALS") - $Expression
   >> sub {
     { WHAT => "PARAM_SPEC",
       NAME => $_[0],
-      VALUE => $_[2],
+      EXPR => $_[2],
     }
   }
   ;
@@ -285,7 +290,7 @@ $atom = $Funapp
 $funapp = $Name - _("LPAREN") - $Expression - _("RPAREN")
             >> sub { 
               my $name = $_[0][1];
-              unless (exists $builtin{$name}) {
+              unless (exists $ROOT_TYPE->{B}{$name}) {
                 lino_error("Unknown function '$name'");
               }
               Expression->new('FUN', $name, $_[2]) 
@@ -306,9 +311,9 @@ $tuple = _("LPAREN")
     my $N = @$explist;
     my @axis = qw(x y z);
     if ($N == 2 || $N == 3) {
-      return [ 'TUPLE',
+      return Expression->new('TUPLE',
                { map { $axis[$_] => $explist->[$_] } (0 .. $N-1) }
-             ];
+             );
     } else {
       lino_error("$N-tuples are not supported\n");
     }
@@ -365,20 +370,18 @@ sub add_subobj_declaration {
     my $decl_type = $decl->{TYPE};
     my $decl_type_obj = $TYPES{$decl_type};
     $type->add_subchunk($name, $decl_type_obj);
+    if ($declaration->{IS_PARAM}) {
+      $type->add_param_default($name, $decl->{EXPR});
+    }
     for my $pspec (@{$decl->{PARAM_SPECS}}) {
-      my $pspec_name = $pspec->{NAME};
-      my $constraints = convert_param_specs($type, $name, $pspec);
-      $type->add_constraints($constraints);
+      $type->add_pspec("$name.$pspec->{NAME}", $pspec->{EXPR});
     }
   }
 }
 
 sub add_constraint_declaration {
   my ($type, $declaration) = @_;
-  my $constraint_expressions = $declaration->{CONSTRAINTS};
-  my @constraints 
-    = map expression_to_constraints($type, $_), @$constraint_expressions;
-  $type->add_constraints(@constraints);
+  $type->add_constraints(@{$declaration->{CONSTRAINTS}});
 }
 
 sub add_draw_declaration {
@@ -401,53 +404,6 @@ sub add_draw_declaration {
 } 
 
 
-# Take an AST for an expression.  Assuming it
-# implies "expression = 0", turn it into a list of constraint
-# (Equation) objects
-sub expression_to_constraints {
-  my ($context, $expr) = @_;
-  unless (defined $expr) {
-    Carp::croak("Missing expression in 'expression_to_constraints'");
-  }
-  my ($op, @s) = @$expr;
-
-  if ($op eq 'VAR') {
-    my $name = $s[0];
-    return Value::Chunk->new_from_var($name, $context->subchunk($name));
-  } elsif ($op eq 'CON') {
-    return Value::Constant->new($s[0]);
-  } elsif ($op eq 'FUN') {
-    my ($name, $arg_exp) = @s;
-    my $arg = expression_to_constraints($context, $arg_exp);
-    unless ($arg->kindof eq "CONSTANT") {
-      lino_error("Argument to function '$name' is not a constant");
-    }
-    return Value::Constant->new($builtin{$name}->($arg->value));
-  } elsif ($op eq 'TUPLE') {
-    my %elements;
-    for my $k (keys %{$s[0]}) {
-      # Add check to make sure that $s[0]{$k} is actually a scalar type XXX
-      $elements{$k} = expression_to_constraints($context, $s[0]{$k});
-    }
-    return Value::Tuple->new(%elements);
-  }
-
-  my $e1 = expression_to_constraints($context, $s[0]);
-  my $e2 = expression_to_constraints($context, $s[1]);
-
-  my %opmeth = ('+' => 'add',
-		'-' => 'sub',
-		'*' => 'mul',
-		'/' => 'div',
-	       );
-  
-  my $meth = $opmeth{$op};
-  if (defined $meth) {
-    return $e1->$meth($e2);
-  } else {
-    lino_error("Unknown operator '$op' in AST");
-  }
-}
 
 ################################################################
 
@@ -499,17 +455,6 @@ sub check_declarator {
       lino_error("Declaration of '$declarator->{NAME}' specifies unknown parameter '$name' for type '$type->{N}'\n");
     }
   }
-}
-
-sub convert_param_specs {
-  my ($context, $subobj, $pspec) = @_;
-  my @constraints;
-  my $left = Value::Chunk->new_from_var("$subobj." . $pspec->{NAME}, 
-					 $context->subchunk($subobj)
-					 ->subchunk($pspec->{NAME})
-					);
-  my $right = expression_to_constraints($context, $pspec->{VALUE});
-  return $left->sub($right);
 }
 
 sub hash2str {

@@ -3,7 +3,7 @@
 
 o param variables
 
-o proper handling of inconsistent equations
+* proper handling of inconsistent equations
 
 o multiplied types
 
@@ -15,7 +15,7 @@ o more tests
 
   * not needed; just "require 'blah'" in the __END__ section
 
-o   type name = EXPR
+o  type name = EXPR
    equivalent to
         type name;
         constraints { name = EXPR; }

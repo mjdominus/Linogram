@@ -400,7 +400,7 @@ all the Q.y and all the P.y equations, but the others would remain:
 
 ----------------------------------------------------------------
 
-20050711
+20050710
 
         require "trig";
 
@@ -416,3 +416,199 @@ can load trig.lino, which is simply:
         register_builtin(cos => sub { cos($_[0] * $PI / 180) });
 
 
+20050711
+
+Why even require the "builtin" declaration?   The only purpose it's
+serving is to change the diagnotic message if you misspell a function
+name.
+
+----------------------------------------------------------------
+
+20050711
+
+The crucial question about parameters seems to be: when are the ASTs
+converted to constraints?
+
+Some subsidiary questions:  are parameters replaced by their values in
+ASTs or in constraints?  I think the former will be easier.  Then
+given
+
+        simple S(b=4+3)
+
+you can compile the param-spec to something like [b, [+, 4, 3]] and
+then later on simply replace [VAR b] with [+, 4, 3] and then do the
+evaluation as usual.
+
+This should turn into two things in the type object: 
+
+        O => { S => simple }
+
+and
+
+        V => { S.b => [+ , 4, 3] }
+
+** When the ->draw method is called, its ASTs are converted to
+constraints.  **
+
+This is done recursively for all subobjects.
+
+The V member is subsetted appropriately and the subset is passed as a
+parameter to expression_to_constraints.
+
+Here's the example you made up that seems to clear things up a lot:
+
+        define simple {
+          number a;
+          param number b = 10;
+          constraints { a*b = 20; }
+        }
+        define hyperb {
+          simple S(b=4);
+        }
+
+When the definition of hyperb() is read, the type object constructed
+for hyperb has O and V as above.  Later, when a hyperbola is drawn,
+its constraints are compiled from the expression trees.  The
+calculation of constraints recurses into the S object with the
+environment {b=>[CON, 4]}.  Then the constraint [-, [*, [VAR, a],
+[VAR, b]], 20] is processed and in the course of that the VAR[b] is
+replaced with [CON 4].
+
+----------------------------------------------------------------
+
+20050713
+
+OK, here's how parameter variables work.  
+
+Every type object contains a "V" member, which is a hash.  There are
+two kinds of items in V.  One is the type's own parameters, with their
+default expression values.  The other is the expressions that the type
+wishes to enforce on the parameter variables of its subobjects.  The
+names of the latter entries have dots in them.  
+
+At DRAW time, we do the following:
+
+  1. Replace parameter variables in constraint expressions with their
+     defining expressions or defaults.  Abort at this time if a
+     parameter is unspecified.
+
+  2. Convert expressions to equations.  
+
+  3. Gather equations from subobjects, qualifying equations
+     appropriately. 
+
+  4. Solve equations.
+
+There will be a Type::constraint_equations method that returns all the
+type's constraint equations.  Its arguments are a (posibly empty) list
+of environment hashes.  It has two phases:
+
+  1. For each constraint expression, call Expression::substitute,
+     passing the environment hashes, and also $self->{V}.  This
+     removes the parameter variables from the expression; see below.
+     Call expression_to_constraints on the result.
+
+  2. For each subobject, subset $self->{V} appropriately and call
+     constraint_equations recursively on the subobject, passing the
+     environment hashes and the $self->{V} subset.  
+
+Merge together the resulting sets of equations and you have the system
+to be solved.
+
+Expression::substitute is passed a list of environment hashes.  It
+recurses over the expression, copying it.  When it reaches a VAR node,
+it looks for the var in the environment.  There are three cases here:
+
+  1. Var is not in the environment.  It is therefore not a parameter,
+     so just leave it alone.  
+
+  2. Var is in the environment, but all appearances of it have
+     undefined value.  Raise an unspecified-parameter error.
+
+  3. Var is in the environment with a defined value.  Take the first
+     (?) such value and replace the VAR node with the result.
+
+Question:  Does case 3 need a recursive call over the replacing value?
+Your idea was "param number a=3, b=a" should be legal, but then [VAR
+b] might not be properly evaluated to [CON 3].
+
+Is "first" correct?  Or should it be "last"?
+
+Types also need an ->is_param method, because the behavior of certain
+syntactic constructions depends on that.  For example:
+
+        sometype P(x=EXPR);
+
+If P.x is a parameter, this adds P.x => EXPR to the current type's V
+hash.  But if P.x is an ordinary variable, this adds [- P.x EXPR] to
+the current type's C hash.  (Idea for later:  Always do the former,
+and add constraints to the V hash whenever they have the form VAR =
+EXPR, even when they're in a CONSTRAINTS section.)
+
+Other cases:
+
+        param sometype P;
+
+Puts P => undef into V.
+
+        param sometype P = EXPR;
+
+puts P => EXPR into V.
+
+        sometype P(x = EXPR);
+
+puts P.x => EXPR into V or P.x = EXPR into C, as above.
+
+Question: what does
+
+        param sometype P(x = EXPR)
+
+do?  Think of a plausible example.
+
+So here's your clearing-up example again:
+
+        define simple {
+          number a;
+          param number b = 10;
+          constraints { a*b = 20; }
+        }
+        define hyperb {
+          simple S(b=4);
+        }
+
+This does
+
+        simple: { O => { a => number,
+                         b => number,
+                       }
+                  C => { [- [* a b] 20] },
+                  V => { b => 10 },
+                }
+
+        hyperb: { O => { S => simple },
+                  V => { S.b => 4 },
+                }
+
+Then then we do hyperb->draw, it calls hyperb->constraints, which gets
+hyperb's constraints (none) and then calls simple->constraints({b =>
+4}).
+
+simple->constraints({b => 4}) calls substitute({b => 4}, {b => 10})
+on its constraint expression [- [* a b] 20], and the result is
+[- [* a 4] 20].  This is then passed to expression_to_constraints,
+which produces { a => 4, "" => -20 }.  hyperb->constraints qualifies
+this to { S.a => 4, "" => -20 }.  This is added to the equation set.
+
+The V hashes will have to be incorporated into the result of solving
+the equations somehow. Maybe the easiest way is to have ->constraints
+do it from the V hashes.  If it sees ({b=>10}, { b => 4, p.x => 12 })
+it can add { b => 1, "" => -4 } to the equation set it yields up.
+This won't slow down the equation solving much.  Or maybe there's a
+better way to just incorporate the values from the V into the solution
+hash after the equations are solved.
+
+
+
+
+
+      

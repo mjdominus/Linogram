@@ -90,7 +90,7 @@ sub scale_equation {
   }
 }
 
-sub eqn_to_string {
+sub to_string {
   my ($e, $v) = @_;
   my @left;
   while (my ($v, $c) = each %$e) {
@@ -265,14 +265,14 @@ sub solve {
       next if $i == $j;
       next unless defined $E[$j];
       next unless $E[$j]->coefficient($var);
-      print "Reducing ", $E[$j]->eqn_to_string,
-        " with ", $E[$i]->eqn_to_string, "\n"
+      print "Reducing ", $E[$j]->to_string,
+        " with ", $E[$i]->to_string, "\n"
           if $DEBUG;
       $E[$j]->substitute_for($var, $E[$i]);
-      print "  Result: ", $E[$j]->eqn_to_string, "\n"
+      print "  Result: ", $E[$j]->to_string, "\n"
         if $DEBUG;
       if ($E[$j]->is_inconsistent) { # print "*** Inconsistent equations\n";
-        warn "Equation " . $E[$i]->eqn_to_string . " failed.\n";
+        warn "Equation " . $E[$i]->to_string . " failed.\n";
         return;
       }
       elsif ($E[$j]->is_tautology) { 
@@ -302,10 +302,10 @@ sub osolve {
         next unless defined $E[$j];
         if ($E[$i]->will_be_reduced_by($E[$j])) {
           $reducing = 1;
-#          print "Reducing ", $E[$i]->eqn_to_string, 
-#            " with ", $E[$j]->eqn_to_string, "\n";
+#          print "Reducing ", $E[$i]->to_string, 
+#            " with ", $E[$j]->to_string, "\n";
           $E[$i]->reduce_by($E[$j]);
-#          print "  Result: ", $E[$i]->eqn_to_string, "\n";
+#          print "  Result: ", $E[$i]->to_string, "\n";
           if ($E[$i]->is_inconsistent) { # print "*** Inconsistent equations\n";
                                          return ;
                                        }
@@ -364,7 +364,7 @@ sub values {
 
 sub print_system {
   for ($_[0]->equations) {
-    print STDERR "* ", $_->eqn_to_string, "\n";
+    print STDERR "* ", $_->to_string, "\n";
   }
 }
 

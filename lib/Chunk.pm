@@ -43,12 +43,14 @@ sub FREEZER {
 # * C: Constraints
 # * D: Drawable list
 # * O: Subchunk hash (names => types)
+# * V: Parameter definitions
+# * B: Builtin functions
 
 sub new {
   my ($old, $name, $parent) = @_;
   my $class = ref $old || $old;
   my $self = {N => $name, P => $parent, C => [], 
-              O => {}, D => [], 
+              O => {}, D => [], V => {}, B => {},
              };
   bless $self => $class;
 }
@@ -57,13 +59,17 @@ sub is_scalar { 0 }
 
 sub parent { $_[0]{P} }
 
-sub add_constraints {
-  my ($self, @values) = @_;
-  for my $value (@values) {
-    next unless $value->kindof eq 'CHUNK';
-    push @{$self->{C}}, 
-      $value->synthetic->constraints;
+sub add_param_default {
+  my ($self, $name, $expr) = @_;
+  if (defined $self->{V}{$name}) {
+    warn "$self->{N} parameter '$name' redefined";
   }
+  $self->{V}{$name} = $expr;
+}
+
+sub add_constraints {
+  my ($self, @exprs) = @_;
+  push @{$self->{C}}, @exprs;
 }
 
 sub constraints {
@@ -97,6 +103,27 @@ sub constraint_set {
 sub add_drawable {
   my ($self, $drawable) = @_;
   push @{$self->{D}}, $drawable;
+}
+
+sub add_pspec {
+  my ($self, $name, $expr) = @_;
+  if ($self->is_param($name)) {
+    $self->add_param_default($name, $expr);
+  } else {
+    $self->add_constraints(Expression->new('-',
+                                           Expression->new('VAR', $name),
+                                           $expr));
+  }
+}
+
+sub is_param {
+  my ($self, $name) = @_;
+  my ($base, $rest) = split /\./, $name, 2;
+  if (defined $rest) {
+    return $self->subchunk($base)->is_param($rest);
+  } else {
+    return exists $self->{V}{$base};
+  }
 }
 
 sub has_subchunk
@@ -167,20 +194,17 @@ sub subchunk {
 
 sub draw {
   my ($self, $env) = @_;
+
   unless ($env) {
     $env ||= Environment->new();
-#    my $equations = $self->constraint_set->incorporate_params($env);
-    my $equations = $self->constraint_set;
+    my $equations = $self->constraint_equations;
     my %solutions = $equations->values;
-#    for my $var (keys %solutions) {
-#      $solutions{$var} = Expression->new_constant($solutions{$var});
-#    }
     $env = Environment->new(%solutions);
+    # XXX TODO maybe incorporate V's here?
   }
 
   for my $name ($self->drawables) {
     if (ref $name) { 		# actually a coderef, not a name
-#      my $env_flat = $env->flatten;
       $name->($env);
     } else {
       my $type = $self->subchunk($name);
@@ -191,6 +215,21 @@ sub draw {
   }
 }
 
+sub constraint_equations {
+  my ($self, @envs) = @_;
+  my $new_env = Environment->new(%{$self->{V}});
+  my @exprs = map $_->substitute(@envs, $new_env), @{$self->{C}};
+  my @eqns = map $_->to_equations($self), @exprs;
+
+  while (my ($name, $type) = each %{$self->{O}}) {
+    next if $type->is_scalar;
+    my @new_eqns = $type->constraint_equations(map $_->subset($name),
+                                               @envs, $new_env);
+    push @eqns, map $_->qualify($name)->equations, @new_eqns;
+  }
+  return Constraint_Set->new(@eqns);
+}
+
 ################################################################
 package Constraint_Set;
 @Constraint_Set::ISA = 'Equation::System';
@@ -198,6 +237,11 @@ package Constraint_Set;
 sub constraints {
   my $self = shift;
   $self->equations;
+}
+
+sub qualify {
+  my ($self, $name) = @_;
+  $self->new(map $_->qualify($name), $self->constraints);
 }
 
 ################################################################

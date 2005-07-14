@@ -58,6 +58,7 @@ my %eval_op = ( '+' => sub { $_[0] + $_[1] },
 		'CON' => "special case",
 		'VAR' => "special case",
 		'FUN' => "special case",
+		'TUPLE' => "special case",
 	      );
 
 sub new {
@@ -76,6 +77,119 @@ sub new_constant {
 
 sub is_constant { $_[0][0] eq "CON" }
 sub value { $_[0][1] }
+
+sub emap {
+  my ($name, $d) = @_;
+  my $f;
+  $f = sub {
+    my ($expr, $u) = @_;
+    my ($op, @s) = @$expr;
+    my $action = (exists $eval_op{$op} ? $d->{$op} : $d->{UNKNOWN})
+              || $d->{DEFAULT};
+    unless (defined $action) {
+      die "emap '$name' found unrecognized operator '$op'";
+    }
+    my @v = map UNIVERSAL::isa($_, 'Expression') ? $f->($_) : $_, @s;
+    return $action->($u, $expr, $op, @v);
+  };
+  return $f;
+}
+
+sub substitute {
+  my ($expr, @envs) = @_;
+  my ($op, @args) = @$expr;
+  if ($op eq 'VAR') {
+    my ($name) = @args;
+    my $is_param;
+    my $value;
+
+    for my $env (@envs) {
+      if ($env->has_var($name)) {
+        $is_param = 1;
+        $value = $env->lookup($name) unless defined $value;
+      }
+    }
+
+    return $expr unless $is_param;
+    return $value if defined $value;
+    die "Unspecified parameter '$name'";
+
+  } else {
+    return $expr->new($op, 
+                      map UNIVERSAL::isa($_, 'Expression') ? $_->substitute(@envs) : $_, 
+                      @args);
+  }
+}
+
+sub qualify {
+  my ($expr, $prefix) = @_;
+  my $q = emap "qualify($prefix)", 
+    { DEFAULT => sub { shift; my $x = shift;
+                       $x->new(@_)
+                     },
+      CON => sub { return $_[1] },
+      VAR => sub { $_[1]->new('VAR', "$prefix.$_[3]") },
+      FUN => sub { return $_[1] },
+    };
+  $q->($expr);
+}
+
+# Take an AST for an expression.  Assuming it
+# implies "expression = 0", turn it into a list of constraint
+# (Equation) objects
+sub to_value {
+  my ($expr, $context) = @_;
+  unless (defined $expr) {
+    Carp::croak("Missing expression in 'expression_to_constraints'");
+  }
+  my ($op, @s) = @$expr;
+
+  if ($op eq 'VAR') {
+    my $name = $s[0];
+    if ($context->is_param($name)) {
+      die "Uneliminated parameter '$name' in '$context->{N}'";
+    }
+    return Value::Chunk->new_from_var($name, $context->subchunk($name));
+  } elsif ($op eq 'CON') {
+    return Value::Constant->new($s[0]);
+  } elsif ($op eq 'FUN') {
+    my ($name, $arg_exp) = @s;
+    my $arg = $arg_exp->to_value($context);
+    unless ($arg->kindof eq "CONSTANT") {
+      lino_error("Argument to function '$name' is not a constant");
+    }
+    return Value::Constant->new($context->builtin($name)->($arg->value));
+  } elsif ($op eq 'TUPLE') {
+    my %elements;
+    for my $k (keys %{$s[0]}) {
+      # Add check to make sure that $s[0]{$k} is actually a scalar type XXX
+      $elements{$k} = $s[0]{$k}->to_value($context);
+    }
+    return Value::Tuple->new(%elements);
+  }
+
+  my $e1 = $s[0]->to_value($context);
+  my $e2 = $s[1]->to_value($context);
+
+  my %opmeth = ('+' => 'add',
+		'-' => 'sub',
+		'*' => 'mul',
+		'/' => 'div',
+	       );
+  
+  my $meth = $opmeth{$op};
+  if (defined $meth) {
+    return $e1->$meth($e2);
+  } else {
+    lino_error("Unknown operator '$op' in AST");
+  }
+}
+
+sub to_equations {
+  my ($self, $context) = @_;
+  my $value = $self->to_value($context);
+  return $value->equations;
+}
 
 sub eval {
   my ($expr, $env) = @_;
@@ -127,7 +241,18 @@ sub new_from_var {
   $base->new($type->qualified_synthetic_constraints($name));
 }
 
+sub param {
+  my ($self, $pname, $pval) = @_;
+  if (@_ == 3) {
+    $self->{PARAM}{$pname} = $pval;
+  } else {
+    return $self->{PARAM}{$pname};
+  }
+}
+
 sub synthetic { $_[0]->{SYNTHETIC} }
+
+sub equations { values %{$_[0]->synthetic} }
 
 sub scale {
   my ($self, $coeff) = @_;
@@ -217,6 +342,10 @@ sub mul_constants {
   $c1->new($c1->value * $c2->value);
 }
 
+sub equations {
+  return [];
+}
+
 ################################################################
 package Value::Tuple;
 @Value::Tuple::ISA = 'Value';
@@ -224,6 +353,7 @@ package Value::Tuple;
 sub kindof { "TUPLE" }
 
 sub components { keys %{$_[0]{TUPLE}} }
+sub component_values { values %{$_[0]{TUPLE}} }
 sub has_component { exists $_[0]{TUPLE}{$_[1]} }
 sub component { $_[0]{TUPLE}{$_[1]} }
 sub to_hash { $_[0]{TUPLE} }
@@ -258,13 +388,18 @@ sub has_same_components_as {
   return 1;
 }
 
+sub equations {
+  my $self = shift;
+  map $_->equations, $self->component_values;
+}
+
 sub add_tuples {
   my ($t1, $t2) = @_;
   croak("Nonconformable tuples") unless $t1->has_same_components_as($t2);
 
   my %result ;
   for my $c ($t1->components) {
-    $result{$c} = $t1->component($c) + $t2->component($c);
+    $result{$c} = $t1->component($c)->add($t2->component($c));
   }
   $t1->new(%result);
 }
