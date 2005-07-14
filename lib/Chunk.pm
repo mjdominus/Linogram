@@ -196,7 +196,8 @@ sub draw {
     $env ||= Environment->new();
     my $equations = $self->constraint_equations($builtins);
     my %solutions = $equations->values;
-    $env = Environment->new(%solutions);
+    my %params = $self->param_values;
+    $env = Environment->new(%params, %solutions);
     # XXX TODO maybe incorporate V's here?
   }
 
@@ -210,6 +211,35 @@ sub draw {
       $type->draw($builtins, $subenv, "already solved");
     }
   }
+}
+
+sub param_values {
+  my $self = shift;
+  my %V;
+
+  for (my $ancestor = $self; $ancestor; $ancestor=$ancestor->parent) {
+    %V = (%V, %{$ancestor->{V}});
+  }
+
+  for my $name (keys %V) {
+    if ($V{$name}[0] eq "CON") { # wrong test here XXX TODO
+      $V{$name} = $V{$name}[1];
+    } else {
+      delete $V{$name};
+    }
+  }
+
+  while (my ($name, $type) = each %{$self->{O}}) {
+    next if $type->is_scalar;
+    my %Vo = $type->param_values;
+    for my $pname (keys %Vo) {
+      my $qname = "$name.$pname";
+      next if exists $V{$qname};
+      $V{$qname} = $Vo{$pname};
+    }
+  }
+
+  %V;
 }
 
 sub constraint_equations {

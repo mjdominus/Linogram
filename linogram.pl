@@ -139,8 +139,8 @@ qw(atom base_name constraint constraint_section declaration
 ################################################################
 
 $program = star($Definition 
-              | $Declaration
-                > sub { add_declarations($ROOT_TYPE, $_[0]) }
+              | ($Declaration
+                 > sub { add_declarations($ROOT_TYPE, $_[0]) })
               )
          - option($Perl_code) - $End_of_Input;
 

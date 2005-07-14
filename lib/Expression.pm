@@ -111,7 +111,8 @@ sub substitute {
     for my $env (@envs) {
       if ($env->has_var($name)) {
         $is_param = 1;
-        $value = $env->lookup($name) unless defined $value;
+        $value = $env->lookup($name);
+        last if defined $value;
       }
     }
 
@@ -140,8 +141,7 @@ sub qualify {
 }
 
 # Take an AST for an expression.  Assuming it
-# implies "expression = 0", turn it into a list of constraint
-# (Equation) objects
+# implies "expression = 0", turn it into a Value::? object
 sub to_value {
   my ($expr, $builtins, $context) = @_;
   unless (defined $expr) {

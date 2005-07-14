@@ -1,7 +1,7 @@
 
 * a = b = c;
 
-o param variables
+* param variables
 
 * proper handling of inconsistent equations
 
@@ -15,7 +15,7 @@ o more tests
 
   * not needed; just "require 'blah'" in the __END__ section
 
-o  type name = EXPR
+*  type name = EXPR
    equivalent to
         type name;
         constraints { name = EXPR; }
@@ -24,4 +24,4 @@ o  type name = EXPR
 
   o "builtin foo;"
 
-
+o Fix TODO and XXX items

@@ -263,7 +263,8 @@ sub solve {
   my $DEBUG = $ENV{DEBUG_EQNS};
   $self->print_system if $DEBUG;
   my $N = my @E = $self->equations;
-  warn "Solving $N equations\n";
+  my $equations = $N == 1 ? "equation" : "equations";
+  warn "Solving $N $equations\n";
   for my $i (0 .. $N-1) {
     next unless defined $E[$i];
     my $var = $E[$i]->a_var;
