@@ -1,0 +1,8 @@
+
+require "line";
+
+line ln;
+
+constraints { ln.start = (0,1); ln.end = (2,3); }
+
+draw { &dump_hash; }
