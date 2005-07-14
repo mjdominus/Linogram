@@ -138,7 +138,7 @@ sub qualify {
 # implies "expression = 0", turn it into a list of constraint
 # (Equation) objects
 sub to_value {
-  my ($expr, $context) = @_;
+  my ($expr, $builtins, $context) = @_;
   unless (defined $expr) {
     Carp::croak("Missing expression in 'expression_to_constraints'");
   }
@@ -154,22 +154,22 @@ sub to_value {
     return Value::Constant->new($s[0]);
   } elsif ($op eq 'FUN') {
     my ($name, $arg_exp) = @s;
-    my $arg = $arg_exp->to_value($context);
+    my $arg = $arg_exp->to_value($builtins, $context);
     unless ($arg->kindof eq "CONSTANT") {
       lino_error("Argument to function '$name' is not a constant");
     }
-    return Value::Constant->new($context->builtin($name)->($arg->value));
+    return Value::Constant->new($builtins->{$name}->($arg->value));
   } elsif ($op eq 'TUPLE') {
     my %elements;
     for my $k (keys %{$s[0]}) {
       # Add check to make sure that $s[0]{$k} is actually a scalar type XXX
-      $elements{$k} = $s[0]{$k}->to_value($context);
+      $elements{$k} = $s[0]{$k}->to_value($builtins, $context);
     }
     return Value::Tuple->new(%elements);
   }
 
-  my $e1 = $s[0]->to_value($context);
-  my $e2 = $s[1]->to_value($context);
+  my $e1 = $s[0]->to_value($builtins, $context);
+  my $e2 = $s[1]->to_value($builtins, $context);
 
   my %opmeth = ('+' => 'add',
 		'-' => 'sub',
@@ -186,8 +186,8 @@ sub to_value {
 }
 
 sub to_equations {
-  my ($self, $context) = @_;
-  my $value = $self->to_value($context);
+  my ($self, $builtins, $context) = @_;
+  my $value = $self->to_value($builtins, $context);
   return $value->equations;
 }
 

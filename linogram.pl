@@ -46,14 +46,12 @@ my $FILE = shift || die "Usage: $0 [-Pperllib] filename";
 
 my $ROOT_TYPE = Type->new('ROOT');
 
-{
-  my $PI = atan2(0, -1);
+my $PI = atan2(0, -1);
 
-  $ROOT_TYPE->{B} = {sin => sub { sin($_[0] * $PI / 180) },
-                     cos => sub { cos($_[0] * $PI / 180) },
-                     sqrt => sub { sqrt($_[0]) },
-                    };
-}
+my %builtins = (sin => sub { sin($_[0] * $PI / 180) },
+                cos => sub { cos($_[0] * $PI / 180) },
+                sqrt => sub { sqrt($_[0]) },
+               );
 
 my %TYPES = ('number' => Type::Scalar->new('number'),
 #             'string' => Type::Scalar->new('string'),
@@ -290,7 +288,7 @@ $atom = $Funapp
 $funapp = $Name - _("LPAREN") - $Expression - _("RPAREN")
             >> sub { 
               my $name = $_[0][1];
-              unless (exists $ROOT_TYPE->{B}{$name}) {
+              unless (exists $builtins{$name}) {
                 lino_error("Unknown function '$name'");
               }
               Expression->new('FUN', $name, $_[2]) 
@@ -418,7 +416,7 @@ sub add_draw_declaration {
 #}
 
 do_file($FILE);
-$ROOT_TYPE->draw();
+$ROOT_TYPE->draw(\%builtins);
 
 sub do_file {
   my $file = shift;

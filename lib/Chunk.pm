@@ -44,13 +44,12 @@ sub FREEZER {
 # * D: Drawable list
 # * O: Subchunk hash (names => types)
 # * V: Parameter definitions
-# * B: Builtin functions
 
 sub new {
   my ($old, $name, $parent) = @_;
   my $class = ref $old || $old;
   my $self = {N => $name, P => $parent, C => [], 
-              O => {}, D => [], V => {}, B => {},
+              O => {}, D => [], V => {},
              };
   bless $self => $class;
 }
@@ -191,11 +190,11 @@ sub subchunk {
 }
 
 sub draw {
-  my ($self, $env) = @_;
+  my ($self, $builtins, $env) = @_;
 
   unless ($env) {
     $env ||= Environment->new();
-    my $equations = $self->constraint_equations;
+    my $equations = $self->constraint_equations($builtins);
     my %solutions = $equations->values;
     $env = Environment->new(%solutions);
     # XXX TODO maybe incorporate V's here?
@@ -208,20 +207,21 @@ sub draw {
       my $type = $self->subchunk($name);
       warn "Drawing subchunk '$name' ($type->{N})\n";  # DEBUG
       my $subenv = $env->subset($name);
-      $type->draw($subenv, "already solved");
+      $type->draw($builtins, $subenv, "already solved");
     }
   }
 }
 
 sub constraint_equations {
-  my ($self, @envs) = @_;
+  my ($self, $builtins, @envs) = @_;
   my $new_env = Environment->new(%{$self->{V}});
   my @exprs = map $_->substitute(@envs, $new_env), $self->constraint_expressions;
-  my @eqns = map $_->to_equations($self), @exprs;
+  my @eqns = map $_->to_equations($builtins, $self), @exprs;
 
   while (my ($name, $type) = each %{$self->{O}}) {
     next if $type->is_scalar;
-    my @new_eqns = $type->constraint_equations(map $_->subset($name),
+    my @new_eqns = $type->constraint_equations($builtins,
+                                               map $_->subset($name),
                                                @envs, $new_env);
     push @eqns, map $_->qualify($name)->equations, @new_eqns;
   }
