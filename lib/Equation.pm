@@ -264,7 +264,7 @@ sub solve {
   $self->print_system if $DEBUG;
   my $N = my @E = $self->equations;
   my $equations = $N == 1 ? "equation" : "equations";
-  warn "Solving $N $equations\n";
+  warn "Solving $N $equations\n" if $DEBUG;
   for my $i (0 .. $N-1) {
     next unless defined $E[$i];
     my $var = $E[$i]->a_var;
@@ -366,7 +366,7 @@ sub values {
       }
     }
   }
-  warn "* Solutions: ", join("\n", sort @DIAG), "\n";
+  warn "* Solutions: ", join("\n", sort @DIAG), "\n" if $DEBUG;
   %values;
 }
 

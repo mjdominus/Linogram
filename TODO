@@ -29,3 +29,5 @@ o Compilation of types into data-dumper code
 o Reorganize modules.  Put Value classes into Value.pm, etc.
 
 o Fix TODO and XXX items
+
+o string constants

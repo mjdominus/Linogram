@@ -206,7 +206,7 @@ sub draw {
       $name->($env);
     } else {
       my $type = $self->subchunk($name);
-      warn "Drawing subchunk '$name' ($type->{N})\n";  # DEBUG
+#      warn "Drawing subchunk '$name' ($type->{N})\n";  # DEBUG
       my $subenv = $env->subset($name);
       $type->draw($builtins, $subenv, "already solved");
     }

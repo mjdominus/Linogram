@@ -22,12 +22,16 @@ $|=1;
 use lib 'lib';
 use strict;
 
+my $verbose;
+
 while (@ARGV && $ARGV[0] =~ /^-(\w)/) {
   my $opt = $1;
   shift;
   if ($opt eq "P") {
     my $file = shift;
     require $file;
+  } elsif ($opt eq "v") {
+    $verbose++;
   } else {
     usage();
   }
@@ -164,7 +168,7 @@ $definition = labeledblock($Defheader, $Declaration)
 
      add_declarations($new_type, @declarations);
 
-     warn "** defined '$name'\n";
+     warn "** defined '$name'\n" if $verbose;
      $TYPES{$name} = $new_type;
   };
 
@@ -424,12 +428,12 @@ $ROOT_TYPE->draw(\%builtins);
 
 sub do_file {
   my $file = shift;
-  warn "Using $file\n";
+  warn "Using $file\n" if $verbose;
   open my($INPUT), "<", $file or die "$file: $!";
   my $input = sub { read $INPUT, my($buf), 8192 or return; $buf };
   my $tokens = lino_lexer($input);
   my ($result, $leftover) = eval { $program->($tokens) };
-  warn "Done with '$file'\n";
+  warn "Done with '$file'\n" if $verbose;
   return 1 unless $@;
   print "Failed: \n";
   Parser::display_failures($@);

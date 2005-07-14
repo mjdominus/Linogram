@@ -5,10 +5,3 @@ define line {
   point start, end, center;
   draw { &draw_line; } 
 }
-
-__END__
-
-sub draw_line { 
-  my $env = shift;
-  print "LINE from ($env->{'start.x'}, $env->{'start.y'}) to ($env->{'end.x'}, $env->{'end.y'})\n";
-}

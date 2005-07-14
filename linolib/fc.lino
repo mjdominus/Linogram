@@ -103,29 +103,4 @@ constraints {
 }
 
 
-__END__
-
-use Data::Dumper;
-print "%!\n";
-
-sub draw_hline {
-  print Dumper("HLINE: ", @_);
-}
-
-sub draw_vline {
-  print Dumper("VLINE: ", @_);
-}
-
-sub draw_line {
-  my $env = shift;
-  my $s = hash2str($env->var_hash);
-#  print "DRAWING LINE ($s)\n";
-
-
-
-                        my ($a, $b, $c, $d) = map $_ * 36, @{$env}{qw(start.x start.y end.x end.y)};
-        
-  print "$a $b moveto $c $d lineto stroke\n";
-}
-
 
