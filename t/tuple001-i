@@ -1,0 +1,9 @@
+number a, b;
+
+constraints { (a, 2) = (3, b); }
+
+draw { &dump_hash; }
+
+__END__
+
+require 'testutils.pl';
