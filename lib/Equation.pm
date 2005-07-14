@@ -203,6 +203,12 @@ sub equation_groups {
   my $self = shift;
   my @groups;
 
+  if ($ENV{DEBUG_EQNS}) {
+    print "Complete system:\n";
+    $self->print_system(">    ");
+    print "----\n";
+  }
+
   my %n; # Maps variable names to lists of equations that use them
   for my $eq ($self->equations) {
     for my $v ($eq->varlist) {
@@ -363,8 +369,10 @@ sub values {
 }
 
 sub print_system {
+  my ($self, $prefix) = @_;
+  $prefix = "* " unless defined $prefix;
   for ($_[0]->equations) {
-    print STDERR "* ", $_->to_string, "\n";
+    print STDERR $prefix, $_->to_string, "\n";
   }
 }
 

@@ -72,16 +72,14 @@ sub add_constraints {
   push @{$self->{C}}, @exprs;
 }
 
-sub constraints {
+sub constraint_expressions {
   my $self = shift;
-  my @constraints = @{$self->{C}};
+
+  my @constraint_exprs = @{$self->{C}};
   my $p = $self->parent;
-  if (defined $p) { push @constraints, @{$p->constraints} }
-  while (my ($name, $type) = each %{$self->{O}}) {
-    my @subconstraints = @{$type->constraints};
-    push @constraints, map $_->qualify($name), @subconstraints;
-  }
-  \@constraints;
+  if (defined $p) { push @constraint_exprs, $p->constraint_expressions }
+
+  @constraint_exprs;
 }
 
 sub synthetic_constraints {
@@ -218,7 +216,7 @@ sub draw {
 sub constraint_equations {
   my ($self, @envs) = @_;
   my $new_env = Environment->new(%{$self->{V}});
-  my @exprs = map $_->substitute(@envs, $new_env), @{$self->{C}};
+  my @exprs = map $_->substitute(@envs, $new_env), $self->constraint_expressions;
   my @eqns = map $_->to_equations($self), @exprs;
 
   while (my ($name, $type) = each %{$self->{O}}) {

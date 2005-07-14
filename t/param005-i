@@ -11,3 +11,8 @@ define hyperb {
 
 
 hyperb H;
+
+draw { &dump_hash; }
+
+__END__
+require 'testutils.pl';

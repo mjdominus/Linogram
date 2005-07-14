@@ -1,0 +1,42 @@
+
+
+*foo means zero or more instances of foo
++foo means one  or more instances of foo
+?foo means zero or one  instances of foo
+
+<foo> means that "foo" must appear literally
+
+
+        program = *declaration perl_code
+
+        declaration = require | definition | draw_section | constraint_section
+
+        require = <require> string <;>
+
+        definition = <define> name ?(<extends> name) <{> *declaration <}>
+
+        draw_section = <draw> <{> *drawable <}>
+
+        drawable = <&> name | cname
+
+        cname = name | cname <.> name
+
+        constraint_section = <constraints> <{> *constraint <}>
+
+        constraint = expression +(<=> expression)
+
+        expression = term + expression | term - expression
+
+        term = atom * expression | atom / expression
+
+        atom = name <(> expression <)> 
+             | name
+             | tuple
+             | number
+             | <(> expression <)>        
+
+        tuple = <(> expression <,> expression *(<,> expression) <)>
+ 
+        perl_code = <__END__\n> (any perl code)
+
+        
