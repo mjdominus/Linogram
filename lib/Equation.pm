@@ -350,7 +350,8 @@ sub values {
   my %values;
   my @DIAG;
   my @groups = $self->equation_groups;
-  warn "Equations fall into " . @groups . " groups.\n"
+  my $groups = @groups == 1 ? "group" : "groups";
+  warn "Equations fall into " . @groups . " $groups.\n"
     if $DEBUG;
   for my $group (@groups) {
     unless ($group->solve) {

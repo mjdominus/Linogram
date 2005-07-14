@@ -1,0 +1,8 @@
+
+number a = sqrt(sqrt(16));
+
+draw { &dump_hash; }
+
+__END__
+
+require "testutils.pl";

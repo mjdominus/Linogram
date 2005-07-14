@@ -1,0 +1,8 @@
+
+number a = 12, b = a + 1;
+
+draw { &dump_hash; }
+
+__END__
+
+require "testutils.pl";

@@ -75,6 +75,11 @@ sub new_constant {
   $base->new('CON', $val);
 }
 
+sub new_var {
+  my ($base, $name) = @_;
+  $base->new('VAR', $name);
+}
+
 sub is_constant { $_[0][0] eq "CON" }
 sub value { $_[0][1] }
 

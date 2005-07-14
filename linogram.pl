@@ -296,7 +296,7 @@ $funapp = $Name - _("LPAREN") - $Expression - _("RPAREN")
         ;
 
 $name = $Base_name - star(_("DOT") - _("IDENTIFIER") >> sub { $_[1] })
-            >> sub { Expression->new('VAR', join(".", $_[0], @{$_[1]})) }
+            >> sub { Expression->new_var(join(".", $_[0], @{$_[1]})) }
         ;
 
 $base_name = _"IDENTIFIER";
@@ -370,6 +370,10 @@ sub add_subobj_declaration {
     $type->add_subchunk($name, $decl_type_obj);
     if ($declaration->{IS_PARAM}) {
       $type->add_param_default($name, $decl->{EXPR});
+    } elsif (defined $decl->{EXPR}) {
+      $type->add_constraints(Expression->new('-', 
+                                             Expression->new_var($name),
+                                             $decl->{EXPR}));
     }
     for my $pspec (@{$decl->{PARAM_SPECS}}) {
       $type->add_pspec("$name.$pspec->{NAME}", $pspec->{EXPR});
