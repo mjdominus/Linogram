@@ -63,3 +63,8 @@ linogram.tgz: $(SOURCE) $(DOC) $(TESTS)
 linogram.zip: $(SOURCE) $(DOC) $(TESTS)
 	zip -q -r linogram.zip $(SOURCE) $(DOC) $(TESTS)
 
+wc: .wc
+	@cat .wc
+
+.wc: $(SOURCE)	
+	@wc $(SOURCE) > .wc
