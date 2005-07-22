@@ -1,0 +1,15 @@
+
+define foo {
+  param number tickpos = 50;
+  number n;
+  constraints { 
+        n = tickpos / 100;
+  }
+}
+
+foo f(tickpos=70);
+
+draw { &dump_hash; }
+
+__END__
+require 'testutils.pl';

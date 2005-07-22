@@ -1,0 +1,15 @@
+
+require "vline";
+require "hline";
+
+define cross extends vline {
+  hline h;
+  constraints { h.length = length; h.center = center; }
+}
+
+cross c(length=2, center=(0,0));
+
+draw { &dump_hash; }
+
+__END__
+require "testutils.pl";
