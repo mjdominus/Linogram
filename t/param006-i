@@ -3,7 +3,7 @@ require "vline";
 require "hline";
 
 define tickline extends vline {
-  param number tickpos = 37;
+  param number tickpos = 25;
   param number ticklen = length / 10;
   hline tick;
   constraints { 

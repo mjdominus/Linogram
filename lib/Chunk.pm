@@ -137,13 +137,14 @@ sub has_subchunk
 sub drawables {
   my ($self) = @_;
   return @{$self->{D}} if $self->{D} && @{$self->{D}};
-  if (my $p = $self->parent) {
-    my @drawables = $p->drawables;
-    return @drawables if @drawables;
-  }
 
   my %subchunk = $self->subchunks;
   my @drawables = grep ! $subchunk{$_}->is_scalar, keys %subchunk;
+
+  if (my $p = $self->parent) {
+    push @drawables, $p->drawables if $p;
+  }
+
   @drawables;
 }
 
@@ -206,7 +207,7 @@ sub draw {
       $name->($env);
     } else {
       my $type = $self->subchunk($name);
-#      warn "Drawing subchunk '$name' ($type->{N})\n";  # DEBUG
+      warn "Drawing subchunk '$name' ($type->{N})\n" if $ENV{DEBUG_DRAW};
       my $subenv = $env->subset($name);
       $type->draw($builtins, $subenv, "already solved");
     }

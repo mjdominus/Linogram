@@ -657,5 +657,12 @@ When b is drawn, what happens?  I think it should call both print_foo
 and print_bar.  The present implementation omits FOO because the
 draw{} section inherited from bar overrides the normal behavior.
 
+Idea:  Just make the change you think is best and see if any of the
+existing tests fail.
+
+Yes, the change did clea up the draw001 and param006 tests and didn't
+mess up anything else.
+
+
 
 
