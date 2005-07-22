@@ -29,8 +29,8 @@ sub diff_report {
       shift @$b;
     }
   }
-  push @r, map "- $_", @$a;
-  push @r, map "+ $_", @$b;
+  push @r, map "+ $_", @$a;
+  push @r, map "- $_", @$b;
   return \@r;
 }
 
