@@ -1,0 +1,19 @@
+
+define foo {
+  draw { &print_foo; }
+}
+
+define bar {
+  draw { &print_bar; }
+}
+
+define baz extends bar {
+  foo f;
+}
+
+baz b;
+
+__END__
+
+sub print_foo { print "FOO\n" }
+sub print_bar { print "BAR\n" }

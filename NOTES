@@ -611,4 +611,51 @@ hash after the equations are solved.
 
 
 
-      
+----------------------------------------------------------------
+
+20050722
+
+Here's an interesting bug.  Consider:
+
+        define cross extends vline {
+          hline h;
+          constraints { ... }
+        }
+
+Now what happens when a cross is drawn?  What are its drawables?
+
+The rule is to draw all the subfeatures (which in this case would
+include h) *unless* there is an explicit draw{} section that overrides
+this.  
+
+But in this case there *is* an explicit draw{} section:  it is
+inherited from line, via vline. 
+
+So what's the correct behavior here?
+
+I think you earlier had some idea about having a special SUPER
+declaration in draw sections that would explicitly reqest that the
+parent be drawn.  I guess that's not appropriate here.  
+
+Maybe the default is "draw my subobjects, and also, if I have a
+parent, subset the environment appropriately, and draw the parent".
+"Appropriately" here migh, at least as a first cut, be "not at all",
+since the parent's draw routines are free (and likely) to ignore the
+parts of the environment they're not expecting to see.
+
+t/draw001 has this boiled down to an essential test case:
+
+        define foo { draw { &print_foo; } }
+
+        define bar { draw { &print_bar; } }
+
+        define baz extends bar { foo f; }
+
+        baz b;
+
+When b is drawn, what happens?  I think it should call both print_foo
+and print_bar.  The present implementation omits FOO because the
+draw{} section inherited from bar overrides the normal behavior.
+
+
+
