@@ -1,0 +1,13 @@
+
+define foo {
+  number a = 20;
+  param number b = a/10;
+}
+
+foo f;
+
+draw { &dump_hash; }
+
+__END__
+
+require 'testutils.pl';
