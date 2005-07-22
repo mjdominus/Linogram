@@ -1,0 +1,14 @@
+
+require "labelbox";
+
+labelbox L(text="fooey");
+
+constraints {
+        L.nw = (2,3);
+        L.wd = 4;
+        L.ht = 5;
+}
+
+__END__
+
+require "draw/dummy.pl";
