@@ -142,7 +142,7 @@ sub drawables {
   my @drawables = grep ! $subchunk{$_}->is_scalar, keys %subchunk;
 
   if (my $p = $self->parent) {
-    push @drawables, $p->drawables if $p;
+    push @drawables, $p->drawables;
   }
 
   @drawables;
