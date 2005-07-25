@@ -21,5 +21,4 @@ draw { &dump_hash; }
 
 __END__
 
-sub put_string { }
-
+require 'testutils.pl';

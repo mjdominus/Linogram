@@ -2,6 +2,7 @@
 define foo {
   number a = 20;
   param number b = a/10;
+  number c = b + 1;
 }
 
 foo f;

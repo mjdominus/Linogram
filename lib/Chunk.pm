@@ -196,9 +196,9 @@ sub draw {
   unless ($env) {
     $env ||= Environment->new();
     my $equations = $self->constraint_equations($builtins);
-    my %solutions = $equations->values;
-    my %params = $self->param_values;
-    $env = Environment->new(%params, %solutions);
+    my $solutions = Environment->new($equations->values);
+    my %params = $self->param_values($solutions);
+    $env = Environment->new(%params, $solutions->var_hash);
     # XXX TODO maybe incorporate V's here?
   }
 
@@ -216,6 +216,7 @@ sub draw {
 
 sub param_values {
   my $self = shift;
+  my $env = shift;
   my %V;
 
   for (my $ancestor = $self; $ancestor; $ancestor=$ancestor->parent) {
@@ -223,10 +224,13 @@ sub param_values {
   }
 
   for my $name (keys %V) {
-    if ($V{$name}[0] eq "CON") { # wrong test here XXX TODO
-      $V{$name} = $V{$name}[1];
+    next unless defined $V{$name};
+    my $val = eval { $V{$name}->to_number($env) };
+    if ($@) {
+      die "Ill-defined parameter $self->{N}.$name\n";
     } else {
-      delete $V{$name};
+      warn "$self->{N}.$name => $val\n" if $ENV{DEBUG_PARAM};
+      $V{$name} = $val;
     }
   }
 

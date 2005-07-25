@@ -196,24 +196,20 @@ sub to_equations {
   return $value->equations;
 }
 
-sub eval {
+sub to_number {
   my ($expr, $env) = @_;
   my ($op, @s) = @$expr;
   if ($op eq 'VAR') {
     if ($env->has_var($s[0])) {
-      return $env->lookup($s[0])->eval($env);  # Possible infinite loop
+      return $env->lookup($s[0])->to_constant($env);  # Possible infinite loop
     } else {
-      return $expr;
+      die "Undefined variable '$s[0]'";
     }
   } elsif ($op eq 'CON') {
-    return $expr;
+    return $s[0];
   } elsif (exists $eval_op{$op}) {
-    my @v = map { $_->eval($env) } @s;
-    if ((grep {$_->[0] eq "CON"} @v) == 2) {
-      return $expr->new_constant($eval_op{$op}->(map {$_->[1]} @v));
-    } else {
-      return $expr->new($op, @v);
-    }
+    my @v = map { $_->to_number($env) } @s;
+    return $eval_op{$op}->(@v);
   } else {
     die "Unknown operator '$op' in expression\n";
   }

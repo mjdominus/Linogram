@@ -42,7 +42,7 @@ for my $infile (@inputs) {
   my $stamp = "$dir/.$infile-o";
 
   if (-e($stamp) &&
-      (-M($stamp) < -M("$input") || -M($stamp) < -M($output))) {
+      -M($stamp) < -M("$input") && -M($stamp) < -M($output)) {
     print "ok $N - $infile skipped (unchanged)\n";
     next;
   }

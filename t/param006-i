@@ -2,13 +2,14 @@
 require "vline";
 require "hline";
 
+
 define tickline extends vline {
   param number tickpos = 25;
-  param number ticklen = length / 10;
+  param number ticklen = 1 / 10;
   hline tick;
   constraints { 
         tick.center = start + (end - start) * tickpos / 100;
-        tick.length = ticklen;
+        tick.length = length * ticklen;
   }
 }
 
