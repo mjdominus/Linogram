@@ -11,6 +11,7 @@ my %op = ("add" =>
            "TUPLE,TUPLE"       => 'add_tuples',
            "TUPLE,CONSTANT"    => undef,
            "CONSTANT,CONSTANT" => 'add_constants',
+           "STRING,STRING"     => 'concat_strings',
 	   NAME => "Addition",
           },
 	  "mul" => 
@@ -58,6 +59,7 @@ my %eval_op = ( '+' => sub { $_[0] + $_[1] },
 		'CON' => "special case",
 		'VAR' => "special case",
 		'FUN' => "special case",
+		'STR' => "special case",
 		'TUPLE' => "special case",
 	      );
 
@@ -73,6 +75,11 @@ sub new {
 sub new_constant {
   my ($base, $val) = @_;
   $base->new('CON', $val);
+}
+
+sub new_string {
+  my ($base, $val) = @_;
+  $base->new('STR', $val);
 }
 
 sub new_var {
@@ -171,6 +178,8 @@ sub to_value {
       $elements{$k} = $s[0]{$k}->to_value($builtins, $context);
     }
     return Value::Tuple->new(%elements);
+  } elsif ($op eq 'STR') {
+    return Value::String->new($s[0]);
   }
 
   my $e1 = $s[0]->to_value($builtins, $context);
@@ -304,6 +313,33 @@ sub mul_chunk_con {
 
 
 ################################################################
+package Value::String;
+@Value::String::ISA = 'Value';
+
+sub new {
+  my ($base, $con) = @_;
+  my $class = ref $base || $base;
+  bless { WHAT => $base->kindof,
+          STRING => $con,
+        } => $class;
+}
+
+sub str { $_[0]{STRING} }
+sub kindof { "STRING" }
+sub scale { 
+  my ($self, $coeff) = @_;
+  die qq{Can't scale string "$self->{STRING}" by $coeff\n};
+}
+sub reciprocal {
+  my ($self) = @_;
+  die qq{Can't take reciprocal of string "$self->{STRING}"\n};
+}
+sub concat_strings {
+  my ($self, $str) = @_;
+  $self->new($self->str . $str->str);
+}
+
+################################################################
 package Value::Constant;
 @Value::Constant::ISA = 'Value';
 
@@ -325,7 +361,7 @@ sub scale {
 }
 
 sub reciprocal {
-  my ($self, $coeff) = @_;
+  my ($self) = @_;
   my $v = $self->value;
   if ($v == 0) {
     die "Division by zero";

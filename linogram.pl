@@ -285,7 +285,7 @@ $atom = $Funapp
       | $Name > sub { Expression->new_var($_[0]) }
       | $Tuple
       | lookfor("NUMBER", sub { Expression->new('CON', $_[0][1]) })
-      | lookfor("STRING", sub { Expression->new('CON', $_[0][1]) })
+      | lookfor("STRING", sub { Expression->new('STR', $_[0][1]) })
       | _('OP', '-') - $Expression
             >> sub { Expression->new('-', Expression->new('CON', 0), $_[1]) }
       | _("LPAREN") - $Expression - _("RPAREN") >> sub {$_[1]};

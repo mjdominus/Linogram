@@ -22,3 +22,11 @@ draw { &dump_hash; }
 __END__
 
 require 'testutils.pl';
+
+# This file actually contains a bug. 
+# The param spec   text="foo"  is incorrect
+# because text is not a string, but  a label, whcih is extended 
+# from point.  text=(3,5) would make sense, and equate
+# text.x=3 and text.x=5, but text="foo" is no good.
+# It *should* raise a type error.
+# It should have been written   text.label="foo" .
