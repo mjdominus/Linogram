@@ -1,0 +1,19 @@
+
+require "vline";
+require "hline";
+
+
+define tickline extends vline {
+  param number tickpos = 25;
+  param number ticklen = length / 10;
+  hline tick;
+  constraints { 
+        tick.center = start + (end - start) * tickpos / 100;
+        tick.length = ticklen;
+  }
+}
+
+tickline t(start=(0,0), end=(0,20));
+
+__END__
+require 'draw/dummy.pl';
