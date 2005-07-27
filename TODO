@@ -47,5 +47,9 @@ o A bunch of the environment handling would be simplified if an
   You wouldn't have to explicitly pass around multiple environments or
   to merge new environments into old ones.
 
-
+o There's an inconsistency in the code in how environments are
+  handled.  In some environments, the values are expressions, and in
+  others they're value objects, and in others they're ordinary Perl
+  scalars.  This is confusing.  Maybe three separate subclasses of a
+  single abstract base class?
 

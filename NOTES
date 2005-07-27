@@ -663,6 +663,73 @@ existing tests fail.
 Yes, the change did clea up the draw001 and param006 tests and didn't
 mess up anything else.
 
+20050725
+
+Your most recent set of changes, adding in strings, has broken *all*
+the "label" tests---looks like some sort of fatal error.  Here's the
+log message:
 
 
+        Fixing bug in label004 tests.
+
+        The real bug was that the test file was incorect and should
+        provoke a type error!  Now it does.
+
+        The fix involved adding a new value type--strings are no
+        longer CON (constants) but special STR (strings).  They have
+        their own "+" method, which concatenates strings, but
+        otherwise resist arithmetic.  "foo" compiles to [ STR, "foo" ]
+        instead of to [ CON, "foo" ].
+
+        Also added a revised, corrected version of label004 that
+        should work, called label005.
+
+Everything else is still working, though.
+
+
+20050725
+
+Now that you have the label stuff straightened out, tests are passing
+that should fail!  
+
+        define foo {
+          number a = c + 1;
+          param number b = a/10;
+          number c = b + 1;
+        }
+
+gets solved correctly, as does
+
+        define foo {
+          number a = c * 2;
+          param number b = a/10;
+          number c = b + 1;
+        }
+
+However
+
+        define foo {
+          number a = c * b;
+          param number b = a/10;
+          number c = b + 1;
+        }
+
+generates a CHUNK * CHUNK error.   What exactly is going on now?  You
+need to think carefully about how params work and how they are
+supposed to work.  How do the first two equations get solved?  Is it
+that they are first reduced to
+
+        a = c + 1
+        c = a/10 + 1
+
+and then the equations are solved and then b is calculated from a?  If
+so, everything is JUST FINE!
+
+What does this theory predict for the third example?  The substitution
+occurs and yields
+
+        a = c * a/10
+        c = a/10 + 1
+
+and then there really is an improper multiplication.
 
