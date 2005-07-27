@@ -1,0 +1,28 @@
+
+
+string a = "foo", b = "bar";
+string c = a+b;
+
+draw { &dump_hash; }
+
+__END__
+require 'testutils.pl';
+
+=head1 note
+
+This doesn't work, and I think rightly so. Although
+
+        c = a+b
+
+looks plausible, it opens a potentially big can of worms, because what
+if c and b are known but a isn't?  When a, b, and c are numbers, we
+interpret this to mean a (numeric) equation where
+
+        c - (a+b) = 0
+
+but for strings, what does "-" mean?  The existing system complains
+that it can't scale a string by -1, which I think is just the right
+thing to do.
+
+
+
