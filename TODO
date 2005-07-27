@@ -28,9 +28,11 @@ o Compilation of types into data-dumper code
 
 o Reorganize modules.  Put Value classes into Value.pm, etc.
 
+  o Do this just after you get to 2.0
+
 o Fix TODO and XXX items
 
-o string constants
+* string constants
 
 o require "foo", "bar", "baz";
 
@@ -55,7 +57,13 @@ o There's an inconsistency in the code in how environments are
 
 o Test string concatenation
 
+o Error production(s) in grammar
+
 o Better error messages!  Modify lexer to include character and line
   in each token.  Then error messages can refer to the position in the
   linogram source file.
+
+o Should compound names be allowed on the LHS of a param-spec?
+
+o Remove unused code
 
