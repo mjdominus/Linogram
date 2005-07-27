@@ -39,3 +39,13 @@ o object declarations or "extends" constructions that involve unknown
   only if none can be found
 
 o comments
+
+o Test suite should check error output instead of throwing it away
+
+o A bunch of the environment handling would be simplified if an
+  environment had a pointer to the next environment to be searched.
+  You wouldn't have to explicitly pass around multiple environments or
+  to merge new environments into old ones.
+
+
+
