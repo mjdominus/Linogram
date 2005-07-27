@@ -205,19 +205,22 @@ sub to_equations {
   return $value->equations;
 }
 
-sub to_number {
+sub to_constant {
   my ($expr, $env) = @_;
   my ($op, @s) = @$expr;
   if ($op eq 'VAR') {
     if ($env->has_var($s[0])) {
-      return $env->lookup($s[0])->to_constant($env);  # Possible infinite loop
+#      return $env->lookup($s[0])->to_constant($env);  # Possible infinite loop
+      return $env->lookup($s[0]);
     } else {
       die "Undefined variable '$s[0]'";
     }
   } elsif ($op eq 'CON') {
     return $s[0];
+  } elsif ($op eq 'STR') {
+    return $s[0];
   } elsif (exists $eval_op{$op}) {
-    my @v = map { $_->to_number($env) } @s;
+    my @v = map { $_->to_constant($env) } @s;
     return $eval_op{$op}->(@v);
   } else {
     die "Unknown operator '$op' in expression\n";

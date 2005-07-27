@@ -217,6 +217,7 @@ sub draw {
 sub param_values {
   my $self = shift;
   my $env = shift;
+  my $DEBUG = $ENV{DEBUG_PARAM};
   my %V;
 
   for (my $ancestor = $self; $ancestor; $ancestor=$ancestor->parent) {
@@ -225,21 +226,25 @@ sub param_values {
 
   for my $name (keys %V) {
     next unless defined $V{$name};
-    my $val = eval { $V{$name}->to_number($env) };
+    my $val = eval { $V{$name}->to_constant($env) };
     if ($@) {
-      die "Ill-defined parameter $self->{N}.$name\n";
+      die "Ill-defined parameter $self->{N}.$name\n\t$@\n";
     } else {
-      warn "$self->{N}.$name => $val\n" if $ENV{DEBUG_PARAM};
+      warn "$self->{N}.$name => $val\n" if $DEBUG;
       $V{$name} = $val;
     }
   }
 
+  my $newenv = $env->clone->merge(%V);
   while (my ($name, $type) = each %{$self->{O}}) {
     next if $type->is_scalar;
-    my %Vo = $type->param_values;
+    warn "Checking subobject $name of type $type->{N}...\n" if $DEBUG;
+    my %Vo = $type->param_values($newenv->subset($name));
+    warn "...Done\n" if $DEBUG;
     for my $pname (keys %Vo) {
       my $qname = "$name.$pname";
       next if exists $V{$qname};
+      warn "Installing param $name.$pname = $Vo{$pname}\n" if $DEBUG;
       $V{$qname} = $Vo{$pname};
     }
   }
@@ -400,6 +405,7 @@ sub clone {
 sub merge {
   my ($self, %new) = @_;
   %$self = (%$self, %new);
+  return $self;
 }
 
 sub lookup {
