@@ -1,4 +1,5 @@
-ln.text: foo
+ln.label: foo
+ln.text.label: foo
 ln.start.x: 0
 ln.start.y: 1
 ln.end.x: 2
