@@ -199,7 +199,6 @@ sub draw {
     my $solutions = Environment->new($equations->values);
     my %params = $self->param_values($solutions);
     $env = Environment->new(%params, $solutions->var_hash);
-    # XXX TODO maybe incorporate V's here?
   }
 
   for my $name ($self->drawables) {
