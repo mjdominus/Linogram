@@ -731,5 +731,9 @@ occurs and yields
         a = c * a/10
         c = a/10 + 1
 
-and then there really is an improper multiplication.
+and then there really is an improper multiplication.  Did you plan
+this feature?  I think you had an idea to do it, then decided that it
+wouldn't work and abandoned it without reflecting carefully.  But it
+does work.  I've refitted t/param006 to go with the original
+conception; its now t/param012.
 

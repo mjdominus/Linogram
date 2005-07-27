@@ -53,3 +53,9 @@ o There's an inconsistency in the code in how environments are
   scalars.  This is confusing.  Maybe three separate subclasses of a
   single abstract base class?
 
+o Test string concatenation
+
+o Better error messages!  Modify lexer to include character and line
+  in each token.  Then error messages can refer to the position in the
+  linogram source file.
+
