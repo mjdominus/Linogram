@@ -231,6 +231,8 @@ sub param_values {
     } else {
       warn "$self->{N}.$name => $val\n" if $DEBUG;
       $V{$name} = $val;
+# Do I also want to add this pair to the environment used in later
+# iterations of the loop, say with $env->merge($name, $val)?
     }
   }
 
