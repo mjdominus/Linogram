@@ -737,3 +737,102 @@ wouldn't work and abandoned it without reflecting carefully.  But it
 does work.  I've refitted t/param006 to go with the original
 conception; its now t/param012.
 
+20050805
+
+Idea for dealing with underconstrained equations.
+
+Each equation group has a minimum and maximum x and a minimum and
+maximum y.  This associates a bounding box with an equation groups.
+
+If an equation group is underconstrained, then;
+
+        1. Issue a warning message:  "Equation group involving ... has
+           $N degrees of freedom"  (N > 0)
+
+        2. Assign one (x,y) variable pair so that it is located
+           *outside* the bounding boxes of the solved equation groups.
+
+        3. Re-solve the underconstrained equation group.  Repeat until
+           equation is no longer unconstrained.
+
+20050805
+
+Question: given an underconstrained equation group, can we determine
+the the range of x and y?  That would help us decide how to assign (x,
+y) to move the entire equation group outside of some box.  
+
+Answers:
+
+        a. Maybe.  Some groups are so constrained.  But some aren't.
+           For example, if A.y = 2 * B.y, the distinace |B.y - A.y|
+           could be arbitrarily large.
+
+        b. Here's an idea I think won't work:  Make "ht" and "wd"
+           special, like "x" and "y" are.  Then calculate bounding
+           boxes by adding up heights.  But
+
+                        |
+                   +----+----+
+                   |         |
+               +---+---+     |
+               |       |   +-+------+
+               +-------+   |        |
+                           |        |
+                           |        |
+                           +--------+
+
+           Suggests that it might be too hard to figure out where everything
+           might be.  There's a lot of complicated geometry you'd have
+           to do.
+
+           Also, The specialness of x, y, z comes fairly naturally out
+           of the treatment of tuples.  How would we get the
+           specialness of ht, wd, ?? similarly naturally?
+
+20050805
+
+The problem you're trying to solve in the previous entry is that you
+would like to figure out a good place to draw the underconstrained
+group so that it doesn't overlap the properly-positioned
+fully-constrained groups, or the other underconstrained groups.
+
+It's easy to calculate a bounding box for a fully-constrained group,
+as you noted above.  But to keep the underconstrained group's box from
+intersecting the known box, you have to know how big it is, and which
+variables are extremal.  But this might not even be well-defined.
+
+20050810
+
+I think here's how we're going to deal with parameters.  There are
+several phases.
+
+        0. Topological-sort the parameters into a dependency order; a
+           depends on b if the defining expression for a involves
+           parameter b.  If there's a cycle, fail with an error
+           message.
+
+        1. Take parameter definitions (which might be expressions) and
+           substitute them into the constraint equations until no
+           param variables remain.  This must be done recursively,
+           because you might have
+
+                param number a = b;
+                param number b = c;
+                number c;
+                constraint { a = 12; }
+
+           There's no worry about infinite recursion, because there
+           are no cycles in the parameter dependency graph.
+
+        2. The constraints are now parameterless.  Convert them to
+           equations.  Fail if there's nonlinearity.
+
+        3. Solve the equations.
+
+        4. In dependency order, evaluate the parameter expressions.
+           This works because you can evaluate each parameter before
+           the parameters on which it depends.
+
+Procedural question: clean up the Environment stuff first?
+
+
