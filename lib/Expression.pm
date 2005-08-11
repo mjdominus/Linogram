@@ -101,10 +101,20 @@ sub emap {
     unless (defined $action) {
       die "emap '$name' found unrecognized operator '$op'";
     }
-    my @v = map UNIVERSAL::isa($_, 'Expression') ? $f->($_) : $_, @s;
+    my @v = map UNIVERSAL::isa($_, 'Expression') ? $f->($_, $u) : $_, @s;
     return $action->($u, $expr, $op, @v);
   };
   return $f;
+}
+
+sub to_str {
+  my $expr = shift;
+  my $make = emap('to_str',
+                  { CON => sub { $_[1][1] },
+                    VAR => sub { $_[1][1] },
+                    DEFAULT => sub { "($_[3] $_[1][0] $_[4])" },
+                  });
+  $make->($expr);
 }
 
 sub substitute {
