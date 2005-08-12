@@ -1,5 +1,4 @@
-use strict;
-
+## use strict;
 
 package Type::Scalar;
 @Type::Scalar::ISA = 'Type';
@@ -472,3 +471,42 @@ sub flatten {
   }
   \%result;
 }
+
+sub tsort {
+  my $self = shift;
+
+  my %h;
+  my @vars = $self->vars;
+  for (@vars) {
+    $h{$_} = [$self->lookup($_)->list_vars];
+  }
+  _tsort(\%h);
+}
+
+# Like tsort, but for hashes of arrays
+# instead of environments of expressions
+sub _tsort {
+  my $h = shift;
+  my %count;
+  for my $var (keys %$h) {
+    $count{$var} += 0;
+    $count{$_}++ for @{$h->{$var}};
+  }
+
+  my @order;
+  while (%count) {
+    my @next = grep $count{$_} == 0, keys %count;
+    if (@next == 0) {
+#      warn "tsort cycle involves [", join(" ", sort keys %count), "]\n";
+      return ();
+    }
+    push @order, @next;
+    for (@next) { 
+      delete $count{$_};
+      --$count{$_}  for @{$h->{$_}};
+    }
+  }
+  reverse @order;
+}
+
+1;
