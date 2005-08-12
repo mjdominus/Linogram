@@ -101,7 +101,7 @@ sub emap {
     unless (defined $action) {
       die "emap '$name' found unrecognized operator '$op'";
     }
-    my @v = map UNIVERSAL::isa($_, 'Expression') ? $f->($_, $u) : $_, @s;
+    my @v = map UNIVERSAL::isa($_, 'Expression') ? $f->($_, $u) : (), @s;
     return $action->($u, $expr, $op, @v);
   };
   return $f;

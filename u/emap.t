@@ -18,15 +18,14 @@ for (1..10) {
   }
 }
 
-$count = Expression::emap('count', 
-                          { CON => sub { my ($sref) = $_[0]; ++$$sref },
-                            VAR => sub { my ($sref) = $_[0]; ++$$sref },
-                           );
+$count = Expression::emap('count',
+                          { DEFAULT => sub { my ($u, $e, $op, @v) = @_;
+                                             my $t = 1; $t += $_ for @v; $t }},
+                          );
 
 for (1..10) {
   for my $e (@{$expr[$_]}) {
-    $COUNT = 0;
-    $count->($e, \$COUNT);
+    my $COUNT = $count->($e);
     is($COUNT, $_*2-1);
   }
 }
