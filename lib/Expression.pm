@@ -90,6 +90,12 @@ sub new_var {
 sub is_constant { $_[0][0] eq "CON" }
 sub value { $_[0][1] }
 
+#
+# There's a big problem with this function:
+# it work great, but you can never rememeber how to use it.
+# You have to look at the source code every time.
+# Is this a problem?  Can (and should) it be redesigned?
+#
 sub emap {
   my ($name, $d) = @_;
   my $f;
@@ -107,15 +113,11 @@ sub emap {
   return $f;
 }
 
-sub to_str {
-  my $expr = shift;
-  my $make = emap('to_str',
-                  { CON => sub { $_[1][1] },
-                    VAR => sub { $_[1][1] },
-                    DEFAULT => sub { "($_[3] $_[1][0] $_[4])" },
-                  });
-  $make->($expr);
-}
+*to_str = emap('to_str',
+               { CON => sub { $_[1][1] },
+                 VAR => sub { $_[1][1] },
+                 DEFAULT => sub { "($_[3] $_[1][0] $_[4])" },
+               });
 
 sub substitute {
   my ($expr, @envs) = @_;
@@ -242,6 +244,30 @@ sub eval_in_place {
   my $result = $self->eval($env);
   @$self = @$result;
 }
+
+sub _uniq {
+  my %h;
+  $h{$_}++ for @_;
+  keys %h;
+}
+
+*uses = emap 'uses',
+  { 
+      DEFAULT => sub {
+          my ($u, $expr, $op, @v) = @_;
+          return [map @$_, @v];
+      },
+      VAR => sub {
+          my ($u, $expr, $op, @v) = @_;
+          [$expr->[1]];
+      },
+  };
+
+sub list_vars {
+  my $vars = uses(@_);
+  _uniq(@$vars);
+}
+
 
 ################################################################
 package Value::Chunk;
