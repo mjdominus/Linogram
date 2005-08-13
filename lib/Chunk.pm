@@ -30,6 +30,7 @@ sub qualified_synthetic_constraints {
 
 ################################################################
 package Type;
+use Environment;
 
 sub FREEZER {
   my $s = "TYPE <$_[0]{N}>";

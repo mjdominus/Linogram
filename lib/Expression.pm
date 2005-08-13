@@ -1,5 +1,6 @@
 
 package Expression; 
+use Value;
 
 my %eval_op = ( '+' => sub { $_[0] + $_[1] },
 		'-' => sub { $_[0] - $_[1] },
