@@ -67,3 +67,7 @@ o Should compound names be allowed on the LHS of a param-spec?
 
 o Remove unused code
 
+o Arithmetic on two chunks should abort with an error message unless
+  the two chunks have a common supertype.
+
+

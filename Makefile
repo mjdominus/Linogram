@@ -5,7 +5,9 @@ LIBS= \
 	lib/Stream.pm   \
 	lib/Chunk.pm    \
 	lib/Expression.pm \
-	lib/Parser.pm
+	lib/Environment.pm \
+	lib/Value.pm \
+	lib/Parser.pm 
 
 LINOLIB= \
 	linolib/point.lino \
