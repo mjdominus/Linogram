@@ -4,6 +4,7 @@ BEGIN {$N = 100}                # N tests
 use lib '../lib';
 use Chunk;
 use Expression;
+use Environment;
 BEGIN { *emap = \&Expression::emap }
 use Test::More tests => $N;
 use lib '../lib/testutils';
