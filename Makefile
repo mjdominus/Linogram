@@ -18,7 +18,8 @@ LINOLIB= \
 
 SOURCE= linogram.pl $(LIBS) $(LINOLIB)
 
-TESTS= do_tests testutils.pl Makefile t/box001-i t/box001-o		\
+TESTS= do_tests lib/testutils/dump_hash.pl Makefile \
+	t/__empty000-i t/__empty000-o t/box001-i t/box001-o		\
 	t/builtin000-i t/builtin000-o t/builtin001-i t/builtin001-o	\
 	t/builtin002-i t/builtin002-o t/constraint001-i			\
 	t/constraint001-o t/constraint002-i t/constraint002-o		\
