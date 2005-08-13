@@ -41,11 +41,18 @@ TESTS= do_tests testutils.pl Makefile t/box001-i t/box001-o		\
 
 DOC=doc/linogram.txt doc/syntax.txt
 
+default: system-tests
+
 
 # do_tests linogram.pl $(LIBS) testutils.pl Makefile
-test: 
+test: unit-tests system-tests
+
+system-tests:
 	perl do_tests t
 	@touch .tested
+
+unit-tests:
+	perl -Ilib -Ilib/testutils -MTest::Harness -e 'runtests(@ARGV)' u/*.t
 
 alltests: nostamps test
 
