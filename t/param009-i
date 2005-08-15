@@ -10,7 +10,7 @@ draw { &dump_hash; }
 
 __END__
 
-require 'testutils.pl';
+require 'testutils/dump_hash.pl';
 
 # There should be a failure here because the parameter is 
 # not well-defined

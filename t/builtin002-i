@@ -5,4 +5,4 @@ draw { &dump_hash; }
 
 __END__
 
-require "testutils.pl";
+require "testutils/dump_hash.pl";

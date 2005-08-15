@@ -1,0 +1,8 @@
+
+param number a = 12;
+param number b = a + 1;
+
+draw { &dump_hash; }
+
+__END__
+require 'testutils/dump_hash.pl';

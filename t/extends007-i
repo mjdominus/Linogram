@@ -12,4 +12,4 @@ cross c(length=2, center=(0,0));
 draw { &dump_hash; }
 
 __END__
-require "testutils.pl";
+require "testutils/dump_hash.pl";

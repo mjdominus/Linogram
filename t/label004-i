@@ -21,7 +21,7 @@ draw { &dump_hash; }
 
 __END__
 
-require 'testutils.pl';
+require 'testutils/dump_hash.pl';
 
 # This file actually contains a bug. 
 # The param spec   text="foo"  is incorrect
