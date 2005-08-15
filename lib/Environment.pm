@@ -88,7 +88,10 @@ sub tsort {
   my %h;
   my @vars = $self->vars;
   for (@vars) {
-    $h{$_} = [$self->lookup($_)->list_vars];
+    my $expr = $self->lookup($_);
+    my @vars = $expr && UNIVERSAL::isa($expr, 'Expression') ? 
+      $expr->list_vars : ();
+    $h{$_} = \@vars;
   }
   _tsort(\%h);
 }
