@@ -1,0 +1,10 @@
+
+number x;
+param number a = 12;
+param number b = x + 1;
+constraints { x = a; }
+
+draw { &dump_hash; }
+
+__END__
+require 'testutils/dump_hash.pl';

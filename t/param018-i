@@ -1,0 +1,15 @@
+
+number x;
+param number a = x + 1;
+param number b = 12;
+constraints { x = b; }
+
+draw { &dump_hash; }
+
+__END__
+require 'testutils/dump_hash.pl';
+
+# 
+# I see no reason why this should work but
+# param016 should fail
+#
