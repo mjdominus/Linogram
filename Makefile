@@ -52,10 +52,11 @@ system-tests:
 	perl do_tests t
 	@touch .tested
 
+all-system-tests: nostamps system-tests
+
 unit-tests:
 	perl -Ilib -Ilib/testutils -MTest::Harness -e 'runtests(@ARGV)' u/*.t
 
-alltests: nostamps test
 
 nostamps:
 	@rm -f t/.*-o

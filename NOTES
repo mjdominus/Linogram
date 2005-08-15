@@ -836,3 +836,35 @@ several phases.
 Procedural question: clean up the Environment stuff first?
 
 
+20050815
+
+You need to think a little more carefully about how the environments
+are handled during the calculation of parameter values.  You have some
+situations in which you need to replace a variable with an expression,
+and others where you need to replace it with a perl number.
+
+The argument to param_values is a type and an environment of outer
+parameter definitions.  This outer environment is an EXPRESSION
+environment, because
+
+        footype n(pn=a+b);
+
+is legal.  So we need to construct the full environment, which
+includes the type's ->{V} hash and its ancestors' ->{V} hashes, and
+then definitions here can be overridden by the outer environment hash.
+
+One thing I think you had wrong:  You were going to substitute
+parameter definitions into other parameter definitions to solve the
+parameters.  Don't bother.  Instead, just substitute directly into the
+constraint expressions, again in tsort order.  The result is that the
+constraint expressions now contain no parameter variables.
+
+You know, looking at the note of 20050810, above, this is exactly what
+you said there under #1 and #2.    I think you were confused today
+because the code doesn't reflect this clear view of things.
+
+Anyway, parameter_values should only be called *after* the equations
+are solved, to handle phase 4, not before the equations are solved.
+Before the equations are solved, it's fine to have parameters be
+defined as expressions.
+

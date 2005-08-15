@@ -46,7 +46,7 @@ for my $infile (@inputs) {
     print "ok $N - $infile skipped (unchanged)\n";
     next;
   }
-  my @input = sort qx{./linogram.pl -P testutils.pl $input 2> /dev/null};
+  my @input = sort qx{./linogram.pl -P lib/testutils/dump_hash.pl $input 2> /dev/null};
   my @output = sort qx{cat $output};
   chomp @input;
   chomp @output;
