@@ -89,6 +89,8 @@ sub substitute {
     return $value if defined $value;
     die "Unspecified parameter '$name'";
 
+  } elsif ($op =~ /\w+/) {      # FIX THIS TEST
+    return $expr;
   } else {
     return $expr->new($op, 
                       map UNIVERSAL::isa($_, 'Expression') ? $_->substitute(@envs) : $_, 
@@ -201,7 +203,7 @@ sub _uniq {
   keys %h;
 }
 
-*uses = emap 'uses',
+*_list_vars = emap 'list_vars',
   { 
       DEFAULT => sub {
           my ($u, $expr, $op, @v) = @_;
@@ -214,7 +216,7 @@ sub _uniq {
   };
 
 sub list_vars {
-  my $vars = uses(@_);
+  my $vars = _list_vars(@_);
   _uniq(@$vars);
 }
 
