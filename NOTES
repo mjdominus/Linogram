@@ -836,6 +836,32 @@ several phases.
 Procedural question: clean up the Environment stuff first?
 
 
+20050813
+
+Consider a type X that has a label in it somewhere.  Now you have
+
+        X a, b;
+        a.label = "foo";
+        b.label = "bar";
+        a = b + (1, 2);
+
+No problem so far.  But what if that last line was
+
+        a = b;
+
+to put them at the same place?  Won't that try to equate a.label = b.label?
+ 
+This isn't a serious problem, and I can see several potential
+solutions, but it may have to be solved somewhere along the line.
+
+For example, when recusring down the feature tree to find the ultimate
+constraints, don't recurse to string types.   Or only recurse
+ultimately to numbers named x, y, and z.  
+
+Or just require that instead of "a = b", the user write something like
+"a = b + (0,0)" or even "a = b + 0".
+
+
 20050815
 
 You need to think a little more carefully about how the environments
@@ -867,4 +893,20 @@ Anyway, parameter_values should only be called *after* the equations
 are solved, to handle phase 4, not before the equations are solved.
 Before the equations are solved, it's fine to have parameters be
 defined as expressions.
+
+20050816
+
+Here's the crucial part of ->draw:
+
+  unless ($env) {
+    $env ||= Environment->new();
+    my $equations = $self->constraint_equations($builtins);
+    my $solutions = Environment->new($equations->values);
+    my %params = $self->param_values($solutions);
+    $env = Environment->new(%params, $solutions->var_hash);
+  }
+
+Clearly, param_values should do the calculation part; the substitution
+phase should be done inside of constraint_equations, and the tsorting,
+since it's used by both should be done in this block.
 
