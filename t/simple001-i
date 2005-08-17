@@ -1,0 +1,11 @@
+
+
+number x, y;
+
+constraints { x = 1; y = 2; }
+
+draw { & dump_hash ; }
+
+__END__
+
+require 'lib/testutils/dump_hash.pl';
