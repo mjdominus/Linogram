@@ -227,6 +227,11 @@ sub over {
   my %subchunks = $self->my_subchunks;
   for my $name (keys %subchunks) {
     my $subenv = $subchunks{$name}->over($meth, %opts)->qualify($name);
+    if ($opts{QUALIFY_VALS}) {
+      for my $vname ($subenv->vars) {
+        $subenv->merge($vname => $subenv->lookup($vname)->qualify($name));
+      }
+    }
     $env->append_env($subenv);
   }
 
@@ -278,7 +283,8 @@ sub over_list {
 # So should the ->{O} hash for that matter
 sub param_defs {
   my $self = shift;
-  $self->over('my_param_defs');
+  my $pd = $self->over('my_param_defs', QUALIFY_VALS => 1);
+  return $pd;
 }
 
 sub my_param_defs {
