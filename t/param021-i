@@ -1,0 +1,17 @@
+
+define S {
+  param number a = 10;
+}
+
+define T {
+  param number b = 20;
+  S s(a=b);
+}
+
+T t(b=30);
+
+draw { &dump_hash; }
+
+__END__
+
+require 'lib/testutils/dump_hash.pl';
