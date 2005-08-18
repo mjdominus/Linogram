@@ -1,0 +1,16 @@
+
+
+define foo {
+  param number b = 3;
+  param number a = b+2;
+}
+
+foo f;
+foo g(a=7);
+foo h(b=4);
+
+draw { &dump_hash; }
+
+__END__
+
+require 'lib/testutils/dump_hash.pl';
