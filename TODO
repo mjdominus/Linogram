@@ -67,7 +67,16 @@ o Should compound names be allowed on the LHS of a param-spec?
 
 o Remove unused code
 
+  o Build a trivial coverage analyzer
+
 o Arithmetic on two chunks should abort with an error message unless
   the two chunks have a common supertype.
 
 o Refactor more Chunk methods using new HO "over" call
+
+o With the implementation of the new system for parameter variables,
+  all your old tests that check for failure in case of 
+  improper parameter specifications are passing instead of failing.
+  That's great, but it now means you need some new tests for the
+  failure cases.
+
