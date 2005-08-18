@@ -229,7 +229,9 @@ sub over {
     my $subenv = $subchunks{$name}->over($meth, %opts)->qualify($name);
     if ($opts{QUALIFY_VALS}) {
       for my $vname ($subenv->vars) {
-        $subenv->merge($vname => $subenv->lookup($vname)->qualify($name));
+        my $expr = $subenv->lookup($vname);
+        next unless defined $expr;
+        $subenv->merge($vname => $expr->qualify($name));
       }
     }
     $env->append_env($subenv);
