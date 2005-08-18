@@ -243,7 +243,7 @@ sub up {
 
   my $env = $self->$meth;
   my $parent = $self->parent;
-  if ($parent) { $env->merge_env($env, $parent->up(@_)) }
+  if ($parent) { $env->append_env($parent->up(@_)) }
 
   $env;
 }
