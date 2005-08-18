@@ -12,10 +12,31 @@ sub clone {
   $self->new($self->var_hash);
 }
 
+# Destructive
 sub merge {
   my ($self, %new) = @_;
   %$self = (%$self, %new);
   return $self;
+}
+
+sub qualify {
+  my $self = shift;
+  my $prefix = shift;
+  my %n = map {+"$prefix.$_" => $self->{$_}} keys(%$self);
+  $self->new(%n);
+}
+
+# Destructive
+sub merge_env {
+  my ($self, $env) = @_;
+  $self->merge($env->var_hash);
+  return $self;
+}
+
+# Destructive
+sub append_env {
+  my ($self, $env) = @_;
+  $env->clone->merge_env($self);
 }
 
 sub lookup {

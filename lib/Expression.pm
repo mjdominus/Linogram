@@ -19,6 +19,14 @@ sub new {
   unless (exists $eval_op{$op}) {
     die "Unknown operator '$op' in expression '$op @args'\n";
   }
+
+#  if (ref $eval_op{$op}
+#      && $args[0][0] eq "CON" && $args[1][0] eq "CON") {
+#    # Fold constants
+#    # XXX assumes all foldable operators are binary
+#    return bless ["CON", $eval_op{$op}->($args[0][1], $args[1][1])] => $class;
+#  }
+
   bless [ $op, @args ] => $class;
 }
 
@@ -63,37 +71,49 @@ sub emap {
   return $f;
 }
 
+
+
 *to_str = emap('to_str',
                { CON => sub { $_[1][1] },
                  VAR => sub { $_[1][1] },
                  DEFAULT => sub { "($_[3] $_[1][0] $_[4])" },
                });
 
+
+# Replace parameter variables with their definitions
+# Also folds constants resulting from such replacements
 sub substitute {
-  my ($expr, @envs) = @_;
+  my ($expr, $param_def, $p_order) = @_;
+  my @p_order = @$p_order;
+
   my ($op, @args) = @$expr;
   if ($op eq 'VAR') {
     my ($name) = @args;
     my $is_param;
     my $value;
 
-    for my $env (@envs) {
-      if ($env->has_var($name)) {
-        $is_param = 1;
-        $value = $env->lookup($name);
-        last if defined $value;
-      }
+#    for my $param (@$p_order) {
+#      my $param = shift @p_order;
+#      next unless $param eq $name;
+#      $is_param = 1;
+#      $value = $param_def->{$name};
+#      last;
+#    }
+    if (exists $param_def->{$name}) {
+      my $value = $param_def->{$name};
+      return $value->substitute($param_def, \@p_order) if defined $value;
+      die "Unspecified parameter '$name'";
     }
-
-    return $expr unless $is_param;
-    return $value if defined $value;
-    die "Unspecified parameter '$name'";
+      
+    return $expr;
 
   } elsif ($op =~ /\w+/) {      # FIX THIS TEST
     return $expr;
   } else {
     return $expr->new($op, 
-                      map UNIVERSAL::isa($_, 'Expression') ? $_->substitute(@envs) : $_, 
+                      map UNIVERSAL::isa($_, 'Expression') 
+                        ? $_->substitute($param_def, $p_order) 
+                        : $_, 
                       @args);
   }
 }
@@ -105,7 +125,7 @@ sub qualify {
                        $x->new(@_)
                      },
       CON => sub { return $_[1] },
-      VAR => sub { $_[1]->new('VAR', "$prefix.$_[3]") },
+      VAR => sub { $_[1]->new('VAR', "$prefix.$_[1][1]") },
       FUN => sub { return $_[1] },
     };
   $q->($expr);
@@ -116,21 +136,18 @@ sub qualify {
 sub to_value {
   my ($expr, $builtins, $context) = @_;
   unless (defined $expr) {
-    Carp::croak("Missing expression in 'expression_to_constraints'");
+    Carp::croak("Missing expression in 'to_value'");
   }
   my ($op, @s) = @$expr;
 
   if ($op eq 'VAR') {
     my $name = $s[0];
-    if ($context->is_param($name)) {
-      die "Uneliminated parameter '$name' in '$context->{N}'";
-    }
     return Value::Chunk->new_from_var($name, $context->subchunk($name));
   } elsif ($op eq 'CON') {
     return Value::Constant->new($s[0]);
   } elsif ($op eq 'FUN') {
     my ($name, $arg_exp) = @s;
-    my $arg = $arg_exp->to_value($builtins, $context);
+    my $arg = $arg_exp->to_value($builtins);
     unless ($arg->kindof eq "CONSTANT") {
       lino_error("Argument to function '$name' is not a constant");
     }

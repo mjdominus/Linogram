@@ -71,14 +71,16 @@ sub add_constraints {
   push @{$self->{C}}, @exprs;
 }
 
-sub constraint_expressions {
+# Utility backend for constraint_expressions
+sub _constraint_expressions {
   my $self = shift;
+  my %h = map {$_ => $_} @{$self->{C}};
+  Environment->new(%h);
+}
 
-  my @constraint_exprs = @{$self->{C}};
-  my $p = $self->parent;
-  if (defined $p) { push @constraint_exprs, $p->constraint_expressions }
-
-  @constraint_exprs;
+sub my_constraint_expressions {
+  my $self = shift;
+  @{$self->{C}};
 }
 
 sub synthetic_constraints {
@@ -138,7 +140,7 @@ sub drawables {
   my ($self) = @_;
   return @{$self->{D}} if $self->{D} && @{$self->{D}};
 
-  my %subchunk = $self->subchunks;
+  my %subchunk = $self->up_subchunks;
   my @drawables = grep ! $subchunk{$_}->is_scalar, keys %subchunk;
 
   if (my $p = $self->parent) {
@@ -155,25 +157,24 @@ sub add_subchunk {
 
 sub subchunks {
   my $self = shift;
-  my %all;
-  while ($self) {
-    %all = (%{$self->{O}}, %all);
-    $self = $self->parent;
-  }
-  %all;
+  %{$self->{O}};
+}
+
+sub up_subchunks {
+  my $self = shift;
+  $self->up('subchunks');
 }
 
 sub all_leaf_subchunks {
   my $self = shift;
   my @all;
-  my %base = $self->subchunks;
+  my %base = $self->up_subchunks;
   while (my ($name, $type) = each %base) {
     push @all, map {$_ eq "" ? $name : "$name.$_"} 
       $type->all_leaf_subchunks;
   }
   @all;
 }
-
 
 sub subchunk { 
   my ($self, $name, $nocroak) = @_;
@@ -194,11 +195,15 @@ sub draw {
   my ($self, $builtins, $env) = @_;
 
   unless ($env) {
-    $env ||= Environment->new();
-    my $equations = $self->constraint_equations($builtins);
+#    $env ||= Environment->new();
+    my $param_defs = $self->param_defs;
+    my @p_order = $param_defs->tsort;
+    my $equations = $self->all_constraint_equations($builtins,
+                                                    $param_defs,
+                                                    \@p_order);
     my $solutions = Environment->new($equations->values);
-    my %params = $self->param_values($solutions);
-    $env = Environment->new(%params, $solutions->var_hash);
+    $env = $self->param_values($solutions, \@p_order);
+    $env->merge_env($solutions);
   }
 
   for my $name ($self->drawables) {
@@ -213,66 +218,148 @@ sub draw {
   }
 }
 
-sub param_values {
+# given a type object and the name of a method that returns an environment,
+# accumulate the return value of the environments returned by the method
+# called on this object and all its subobjects.
+sub over {
+  my ($self, $meth, %opts) = @_;
+
+  my $env = $opts{NO_UP} ? $self->$meth : $self->up($meth, %opts);
+
+  my %subchunks = $self->subchunks;
+  for my $name (keys %subchunks) {
+    my $subenv = $subchunks{$name}->over($meth, %opts)->qualify($name);
+    $env->append_env($subenv);
+  }
+
+  $env;
+}
+
+# given a type object and the name of a method that returns an
+# environment, accumulate the environments from the method called on
+# this object and all its parent objects
+sub up {
   my $self = shift;
-  my $env = shift;
+  my ($meth) = @_;
+
+  my $env = $self->$meth;
+  my $parent = $self->parent;
+  if ($parent) { $env->merge_env($env, $parent->up(@_)) }
+
+  $env;
+}
+
+sub up_list {
+  my ($self, $meth) = @_;
+  my @results;
+
+  for ( ; $self; $self = $self->parent) {
+    push @results, $self->$meth;
+  }
+  @results;
+}
+
+sub over_list {
+  my ($self, $meth, %opts) = @_;
+  my @results;
+
+  @results = $opts{NO_UP} ? $self->$meth : $self->up_list($meth, %opts);
+
+  my %subchunks = $self->subchunks;
+  for my $name (keys %subchunks) {
+    my @sub = $subchunks{$name}->over_list($meth, %opts);
+    push @results, map $_->qualify($name), @sub;
+
+  }
+
+  @results;
+}
+
+
+# The ->{V} hash should probably be an enironment to begin with
+# So should the ->{O} hash for that matter
+sub param_defs {
+  my $self = shift;
+  $self->over('my_param_defs');
+}
+
+sub my_param_defs {
+  my $self = shift;
+  Environment->new(%{$self->{V}});
+}
+
+
+# Given a type, which contains parameter definitions, an environment
+# of solved variable values, and a dependency ordering of parameter
+# names, evaluate the definitions and return an  environment mapping parameter
+# names to their values
+sub param_values {
+  my ($self, $_env, $p_order) = @_;
   my $DEBUG = $ENV{DEBUG_PARAM};
-  my %V;
+  my $env = $_env->clone();
+  my $pvals = Environment->new();
 
-  for (my $ancestor = $self; $ancestor; $ancestor=$ancestor->parent) {
-    %V = (%V, %{$ancestor->{V}});
-  }
+  my $params = $self->up('param_defs');
 
-  my $param_base = Environment->new(%V);
-  my @param_order = $param_base->tsort;
-  for my $name (@param_order) {
-    $param_base->lookup($name)->substitute($param_base);
-  }
-
-  for my $name (keys %V) {
-    next unless defined $V{$name};
-    my $val = eval { $V{$name}->to_constant($env) };
+  for my $name (@$p_order) {
+    my $param_exp = $params->lookup($name);
+    if (not defined $param_exp) {
+      die "Undefined parameter $self->{N}.$name\n";
+    }
+    my $val = eval { $param_exp->to_constant($env) };
     if ($@) {
       die "Ill-defined parameter $self->{N}.$name\n\t$@\n";
     } else {
       warn "$self->{N}.$name => $val\n" if $DEBUG;
-      $V{$name} = $val;
-# Do I also want to add this pair to the environment used in later
-# iterations of the loop, say with $env->merge($name, $val)?
+      $pvals->merge($name => $val);
+      $env->merge($name => $val);
     }
   }
 
-  my $newenv = $env->clone->merge(%V);
   while (my ($name, $type) = each %{$self->{O}}) {
     next if $type->is_scalar;
     warn "Checking subobject $name of type $type->{N}...\n" if $DEBUG;
-    my %Vo = $type->param_values($newenv->subset($name));
+    my $Vo = $type->param_values($env->subset($name));
     warn "...Done\n" if $DEBUG;
-    for my $pname (keys %Vo) {
-      my $qname = "$name.$pname";
-      next if exists $V{$qname};
-      warn "Installing param $name.$pname = $Vo{$pname}\n" if $DEBUG;
-      $V{$qname} = $Vo{$pname};
-    }
+    my $Vq = $Vo->qualify($name);
+    $pvals->merge_env($Vq);
+    $env->merge_env($Vq);
   }
 
-  %V;
+  $pvals;
 }
 
+# Given a type object, en environment defining builtin functions,
+# an environment with parameter definitions, and a topological 
+# ordering of the parameter names, 
+# return a constraint set of the type's constraints, 
+# including those from subtypes, with all parameters replaced by
+# their definitions and all builtin functions evaluated
 sub constraint_equations {
-  my ($self, $builtins, @envs) = @_;
-  my $new_env = Environment->new(%{$self->{V}});
-  my @exprs = map $_->substitute(@envs, $new_env), $self->constraint_expressions;
-  my @eqns = map $_->to_equations($builtins, $self), @exprs;
+  my ($self, $builtins, $param_def, $p_order) = @_;
 
-  while (my ($name, $type) = each %{$self->{O}}) {
-    next if $type->is_scalar;
-    my @new_eqns = $type->constraint_equations($builtins,
-                                               map $_->subset($name),
-                                               @envs, $new_env);
-    push @eqns, map $_->qualify($name)->equations, @new_eqns;
+  my @exprs = $self->constraint_expressions;
+
+  for my $expr (@exprs) {
+    $expr = $expr->substitute($param_def, $p_order);
   }
-  return Constraint_Set->new(@eqns);
+  
+  my @eqns = map $_->to_equations($builtins, $self), @exprs;
+  Constraint_Set->new(@eqns);
+}
+
+sub all_constraint_equations {
+  my ($self, $builtins, $param_defs, $p_order) = @_;
+
+  my @constraint_expressions = $self->over_list('my_constraint_expressions');
+
+  for my $expr (@constraint_expressions) {
+    $expr = $expr->substitute($param_defs, $p_order);
+  }
+
+  my @eqns = map $_->to_equations($builtins, $self), @constraint_expressions;
+
+  Constraint_Set->new(@eqns);
 }
 
 ################################################################
