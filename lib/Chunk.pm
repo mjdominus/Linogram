@@ -32,10 +32,10 @@ sub qualified_synthetic_constraints {
 package Type;
 use Environment;
 
-sub FREEZER {
-  my $s = "TYPE <$_[0]{N}>";
-  \$s;
-}
+#sub FREEZER {
+#  my $s = "TYPE <$_[0]{N}>";
+#  \$s;
+#}
 
 # What does a type contain?
 # * N: Type name
@@ -155,20 +155,19 @@ sub add_subchunk {
   $self->{O}{$name} = $type;
 }
 
-sub subchunks {
+sub my_subchunks {
   my $self = shift;
   %{$self->{O}};
 }
 
-sub up_subchunks {
-  my $self = shift;
-  $self->up('subchunks');
-}
 
 sub all_leaf_subchunks {
   my $self = shift;
   my @all;
-  my %base = $self->up_subchunks;
+  my $sc = sub { my $self = shift;
+                 Environment->new($self->my_subchunks)
+               };
+  my %base = $self->up($sc)->var_hash;
   while (my ($name, $type) = each %base) {
     push @all, map {$_ eq "" ? $name : "$name.$_"} 
       $type->all_leaf_subchunks;
@@ -226,7 +225,7 @@ sub over {
 
   my $env = $opts{NO_UP} ? $self->$meth : $self->up($meth, %opts);
 
-  my %subchunks = $self->subchunks;
+  my %subchunks = $self->my_subchunks;
   for my $name (keys %subchunks) {
     my $subenv = $subchunks{$name}->over($meth, %opts)->qualify($name);
     $env->append_env($subenv);
@@ -265,7 +264,7 @@ sub over_list {
 
   @results = $opts{NO_UP} ? $self->$meth : $self->up_list($meth, %opts);
 
-  my %subchunks = $self->subchunks;
+  my %subchunks = $self->my_subchunks;
   for my $name (keys %subchunks) {
     my @sub = $subchunks{$name}->over_list($meth, %opts);
     push @results, map $_->qualify($name), @sub;
