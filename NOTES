@@ -910,3 +910,23 @@ Clearly, param_values should do the calculation part; the substitution
 phase should be done inside of constraint_equations, and the tsorting,
 since it's used by both should be done in this block.
 
+20050817
+
+What are the drawables of an object?  You ran into this question
+before.  I think the answer is:
+
+        If the object has an explicit drawables{} section, use that.
+        
+        Otherwise, if any ancestor of the object has an explicit
+        drawables{} section, use the first one found.
+
+        Otherwise, use all the (nonscalar) subobjects of the object,
+        including all those inherited from ancestors.
+
+But now that I think about it, maybe it's more useful to try
+
+        If the object has an explicit drawables{} section, use that.
+        
+        Otherwise, it's the (nonscalar) subobjects, *plus* the
+        parent's drawables.
+
