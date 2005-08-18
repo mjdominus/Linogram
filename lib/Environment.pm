@@ -120,7 +120,7 @@ sub tsort {
     my $expr = $self->lookup($_);
     my @vars = $expr && UNIVERSAL::isa($expr, 'Expression') ? 
       $expr->list_vars : ();
-    $h{$_} = \@vars;
+    $h{$_} = [grep $self->has_var($_), @vars];
   }
   _tsort(\%h);
 }
