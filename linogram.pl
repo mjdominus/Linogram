@@ -22,7 +22,7 @@ $|=1;
 use lib 'lib';
 use strict;
 
-my $verbose;
+my ($verbose, $outputdir) = @_;
 
 while (@ARGV && $ARGV[0] =~ /^-(\w)/) {
   my $opt = $1;
@@ -32,6 +32,9 @@ while (@ARGV && $ARGV[0] =~ /^-(\w)/) {
     require $file;
   } elsif ($opt eq "v") {
     $verbose++;
+  } elsif ($opt eq "o") {
+    $outputdir = shift;
+    require Data::Dumper;
   } else {
     usage();
   }
@@ -170,6 +173,18 @@ $definition = labeledblock($Defheader, $Declaration)
 
      warn "** defined '$name'\n" if $verbose;
      $TYPES{$name} = $new_type;
+
+     if (defined $outputdir) {
+       my $f = "$outputdir/$name.linoc";
+       if (open my($O), ">", $f) {
+         local $Data::Dumper::Purity = 1;
+         print $O Data::Dumper->Dump([$TYPES{$name}], ["TYPE_$name"]);
+       } else {
+         warn "Couldn't open $f: $!; disabling compilation\n";
+         undef $outputdir;
+       }
+     }
+
   };
 
 $extends = option(_("EXTENDS") - _("IDENTIFIER") >> sub { $_[1] }) ;
@@ -430,6 +445,9 @@ $ROOT_TYPE->draw(\%builtins);
 sub do_file {
   my $file = shift;
   warn "Using $file\n" if $verbose;
+  if ($file =~ /\.linoc$/) {
+    do_compiled_file($file) && return;
+  }
   open my($INPUT), "<", $file or die "$file: $!";
   my $input = sub { read $INPUT, my($buf), 8192 or return; $buf };
   my $tokens = lino_lexer($input);
@@ -441,11 +459,21 @@ sub do_file {
   return;
 }
 
+sub do_compiled_file {
+  my $file = shift;
+  my $type = $file;
+  die "Malformed compiled filename '$file'"
+    unless $type =~ s/\.linoc$//;
+  $TYPES{$type} = do $file;
+}
+
 sub lib_resolve {
   my $f = shift;
   for my $d (@search_path) {
-    return "$d/$f" if -r "$d/$f";
-    return "$d/$f.lino" if -r "$d/$f.lino";
+    my $F = "$d/$f";
+    return "$F.linoc" if -r "$F.linoc" && -M "$F.linoc" <= -M $F;
+    return $F if -r $F;
+    return "$F.lino" if -r "$F.lino";
   }
   return;
 }
