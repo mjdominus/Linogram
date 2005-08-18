@@ -12,5 +12,9 @@ __END__
 
 require 'testutils/dump_hash.pl';
 
-# There should be a failure here because the parameter is 
-# not well-defined
+# You put this in as en example of a failure, 
+# but in the new, more flexible regime, it's a success.
+# the equations (just "a = 20") can be solved, and then
+# the parameter b can be computed in terms of the solution
+# to the equations.
+
