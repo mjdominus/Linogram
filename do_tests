@@ -4,6 +4,11 @@ my $N = 0;
 
 my $dir = ".";
 
+$FORCE = 0;
+if ($ARGV[0] eq "-f") {
+  $FORCE = shift;
+}
+
 my @inputs;
 if (@ARGV == 1 && -d $ARGV[0]) {
   $dir = shift;
@@ -50,8 +55,9 @@ for my $infile (@inputs) {
   }
   ++$N;
 
-  if (-e($stamp) &&
-      -M($stamp) < -M("$input") && -M($stamp) < -M($output)) {
+  if (  ! $FORCE
+      && -e($stamp)
+      && -M($stamp) < -M("$input") && -M($stamp) < -M($output)) {
     print "ok $N - $infile skipped (unchanged)\n";
     next;
   }
