@@ -20,8 +20,12 @@ for (1..10) {
 
 $count = Expression::emap('count',
                           { DEFAULT => sub { my ($u, $e, $op, @v) = @_;
-                                             my $t = 1; $t += $_ for @v; $t }},
-                          );
+                                             my $t = 1; $t += $_ for @v; $t },
+                            CON => sub { return 1 },
+                            VAR => sub { return 1 },
+                            STR => sub { return 1 },
+                          },
+                         );
 
 for (1..10) {
   for my $e (@{$expr[$_]}) {
