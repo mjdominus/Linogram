@@ -14,9 +14,15 @@ LINOLIB= \
 	linolib/line.lino \
 	linolib/hline.lino \
 	linolib/vline.lino \
-	linolib/box.lino
+	linolib/box.lino \
+	linolib/label.lino \
+	linolib/labelbox.lino
 
-SOURCE= linogram.pl $(LIBS) $(LINOLIB)
+DRAW= \
+	draw/postscript.pl \
+	draw/dummy.pl
+
+SOURCE= linogram.pl $(LIBS) $(LINOLIB) $(DRAW)
 
 TESTS= t/__empty000-i t/__empty000-o t/box001-i t/box001-o		\
 	t/builtin000-i t/builtin000-o t/builtin001-i t/builtin001-o	\
@@ -57,9 +63,11 @@ TESTS= t/__empty000-i t/__empty000-o t/box001-i t/box001-o		\
 	t/simple002-i t/simple002-o t/simple003-i t/simple003-o		\
 	t/string001-i t/string001-o t/subfile001-i t/subfile001-o	\
 	t/tripeq-i t/tripeq-o t/tripeq2-i t/tripeq2-o t/tuple001-i	\
-	t/tuple001-o
+	t/tuple001-o \
+	u/emap.t u/tsort.t lib/testutils/dump_hash.pl lib/testutils/exprs.pl \
+	do_tests Makefile  
 
-DOC=doc/linogram.txt doc/syntax.txt
+DOC=doc/linogram.txt doc/syntax.txt demo.lino
 
 default: system-tests
 
@@ -92,10 +100,16 @@ DIFFS: $(LIBS) linogram.pl
 dist: nostamps linogram.tgz linogram.zip
 
 linogram.tgz: $(SOURCE) $(DOC) $(TESTS)
-	tar czf linogram.tgz $(SOURCE) $(DOC) $(TESTS)
+	mkdir linogram
+	tar cf - $(SOURCE) $(DOC) $(TESTS) | (cd linogram; tar xf -)
+	tar czf linogram.tgz linogram
+	rm -rf linogram
 
 linogram.zip: $(SOURCE) $(DOC) $(TESTS)
-	zip -q -r linogram.zip $(SOURCE) $(DOC) $(TESTS)
+	mkdir linogram
+	tar cf - $(SOURCE) $(DOC) $(TESTS) | (cd linogram; tar xf -)
+	zip -q -r linogram.zip linogram
+	rm -rf linogram
 
 wc: .wc
 	@cat .wc
