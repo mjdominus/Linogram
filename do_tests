@@ -1,9 +1,14 @@
 #!/usr/bin/perl
 
 my $N = 0;
-my $dir = shift || ".";
+
+my $dir = ".";
 
 my @inputs;
+if (@ARGV == 1 && -d $ARGV[0]) {
+  $dir = shift;
+}
+
 if (@ARGV) {
   @inputs = @ARGV;
 } else {
@@ -36,10 +41,14 @@ sub diff_report {
 
 for my $infile (@inputs) {
   $infile =~ s/-i$// or die "input $input??";
-  my $input = "$dir/$infile-i";
+  my ($input, $output, $stamp) = ("$infile-i", "$infile-o", ".$infile-o");
+  if ($infile =~ m{/}) {
+    $stamp = $output;
+    substr($stamp, rindex($stamp, "/"), 1) = "/.";
+  } else {
+    $_ = "$dir/$_" for $input, $output, $stamp;
+  }
   ++$N;
-  my $output = "$dir/$infile-o";
-  my $stamp = "$dir/.$infile-o";
 
   if (-e($stamp) &&
       -M($stamp) < -M("$input") && -M($stamp) < -M($output)) {
