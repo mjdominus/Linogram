@@ -51,8 +51,8 @@ END {
     $yoff = ($Y - $ht * $scale) / 2 + 24;
   }
 
-  warn "bb=($xmin, $ymin)-($xmax, $ymax)\n";
-  warn "wd=$wd ht=$ht\nscale=$scale\noffset=($xoff,$yoff)\n";
+#  warn "bb=($xmin, $ymin)-($xmax, $ymax)\n";
+#  warn "wd=$wd ht=$ht\nscale=$scale\noffset=($xoff,$yoff)\n";
 
   header(bb => [24, 24, $wd * $scale + 24, $ht * $scale + 24],
          mode => $mode);

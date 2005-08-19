@@ -1,0 +1,54 @@
+
+require "labelbox";
+
+define label_line extends line {
+  label toplabel(text=""), rightlabel(text="");
+  param number vspc = 0.1, hspc = 0.1;
+  constraints {
+    toplabel + (0, -vspc) = center;
+    rightlabel + (-hspc, 0) = center;
+  }        
+}
+
+define bentline {
+  line upper, lower;
+  param number depth = 0.2;
+  point start, end, center;
+  constraints {
+    center = upper.end = lower.start;
+    start = upper.start;  end = lower.end;
+    start.x = end.x = center.x + depth;
+    center.y = (start.y + end.y)/2;
+  }
+}
+
+labelbox F(text="F"), plus(text="+"), con32(text="32"), 
+         times(text="*"), C(text="C"), con59(text="5/9");
+label_line i(toplabel.text="i"), 
+           j(toplabel.text="j"), 
+           l(toplabel.text="l"), 
+           m(toplabel.text="m");
+
+bentline k;
+label klbl(text="k") = k.upper.center - (0.1, 0);
+
+number boxht = 1, boxwd = 1, hspc = 1 + boxwd, vspc = 1 + boxht;
+
+
+constraints {
+  F.ht = boxht; F.wd = boxwd;
+
+  plus = F + (hspc, 0);
+  con32 = plus + (hspc, 0);
+  times = plus + (0, vspc);
+  C = times + (hspc, 0);
+  con59 + (hspc, -vspc/2) = times;
+
+  i.start = F.e;     i.end = plus.nw;
+  j.start = plus.e;  j.end = con32.w;
+  k.start = plus.sw; k.end = times.nw;
+  l.start = con59.e; l.end = times.sw;
+  m.start = times.e; m.end = C.w;
+
+  F.nw = (0,0);
+}

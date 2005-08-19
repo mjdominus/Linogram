@@ -63,6 +63,10 @@ DOC=doc/linogram.txt doc/syntax.txt
 
 default: system-tests
 
+demo: demo.ps
+
+demo.ps: demo.lino linogram.pl draw/postscript.pl $(LINOLIB)
+	perl linogram.pl -P draw/postscript.pl demo.lino > demo.ps
 
 # do_tests linogram.pl $(LIBS) testutils.pl Makefile
 test: unit-tests system-tests
