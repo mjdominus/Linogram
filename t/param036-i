@@ -1,0 +1,17 @@
+
+require "point";
+
+define U { number n; point p; }
+
+define UU extends U {
+  param number q = 2;
+  constraints { n=3; p + (q, q) = (n, n); }
+}
+
+UU uu;
+
+draw { &dump_hash; }
+
+__END__
+
+require "lib/testutils/dump_hash.pl";

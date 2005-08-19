@@ -107,6 +107,8 @@ sub substitute {
       
     return $expr;
 
+  } elsif ($op eq 'TUPLE') {
+    return $expr->tuplemap(sub { $_[0]->substitute($param_def, $p_order) });
   } elsif ($op =~ /\w+/) {      # FIX THIS TEST
     return $expr;
   } else {
@@ -127,8 +129,25 @@ sub qualify {
       CON => sub { return $_[1] },
       VAR => sub { $_[1]->new('VAR', "$prefix.$_[1][1]") },
       FUN => sub { return $_[1] },
+      TUPLE => sub { 
+        return $_[1]->tuplemap(sub{ $_[0]->qualify($prefix) })
+      },
     };
   $q->($expr);
+}
+
+# $self is a tuple expression
+# map $f over its component values and return a new tuple
+sub tuplemap {
+  my ($self, $f) = @_;
+  my ($op, $comp) = @$self;
+  die "expression <@$self> is not a tuple in tuplemap()"
+    unless $op eq "TUPLE";
+  my %new;
+  for my $k (keys %$comp) {
+    $new{$k} = $f->($comp->{$k}, $k);
+  }
+  $self->new('TUPLE', \%new);
 }
 
 # Take an AST for an expression.  Assuming it
