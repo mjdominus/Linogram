@@ -930,3 +930,24 @@ But now that I think about it, maybe it's more useful to try
         Otherwise, it's the (nonscalar) subobjects, *plus* the
         parent's drawables.
 
+20050819
+
+Extend param spec notation so that
+
+        labelbox L(label.text="foo")
+
+is legal; that way you would not have to use the silly trick of 
+
+        define labelbox {
+          param string text = "";
+          label L(text=text);
+        }
+
+everywhere.  This has serious problems.  Most obviously, suppose there
+are lots of parameters?  Then many types will have many redundant
+param declarations like this.  Less obviously, what if "label" has a
+default text?  The declaration in "labelbox" needs exactly the same
+default, or else the behavior is broken.
+
+Idea: just make the change to the grammar; see if any of the tests
+fail. It might Just Work.

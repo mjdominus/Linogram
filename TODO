@@ -40,7 +40,7 @@ o object declarations or "extends" constructions that involve unknown
   types might try to require a .lino file of the same name, and fail
   only if none can be found
 
-o comments
+o Comments
 
 o Test suite should check error output instead of throwing it away
 

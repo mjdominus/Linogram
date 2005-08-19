@@ -223,7 +223,7 @@ $declarator = _("IDENTIFIER")
     };
   };
 
-$param_spec = _("IDENTIFIER") - _("EQUALS") - $Expression
+$param_spec = $Name - _("EQUALS") - $Expression
   >> sub {
     { WHAT => "PARAM_SPEC",
       NAME => $_[0],

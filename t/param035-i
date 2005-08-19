@@ -1,0 +1,28 @@
+
+
+require "point";
+
+define label extends point {
+        param string label;
+        draw { &put_string; }
+}
+
+require "box";
+
+define labelbox extends box {
+        label the_label;
+        draw { top; left; bottom; right; the_label; }
+        constraints { the_label = c; }
+}
+
+labelbox L(the_label.label="fooey");
+
+constraints {
+        L.nw = (2,3);
+        L.wd = 4;
+        L.ht = 5;
+}
+
+__END__
+
+require "draw/dummy.pl";

@@ -1,0 +1,5 @@
+TEXT 'fooey' at (4, 5.5)
+LINE from (2, 3) to (2, 8)
+LINE from (2, 3) to (6, 3)
+LINE from (2, 8) to (6, 8)
+LINE from (6, 3) to (6, 8)
