@@ -3,7 +3,7 @@
 require "point";
 
 define label extends point {
-        param string label;
+        param string text;
         draw { &put_string; }
 }
 
@@ -15,7 +15,7 @@ define labelbox extends box {
         constraints { the_label = c; }
 }
 
-labelbox L(the_label.label="fooey");
+labelbox L(the_label.text="fooey");
 
 constraints {
         L.nw = (2,3);
