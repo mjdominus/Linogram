@@ -26,6 +26,7 @@ sub draw_line {
 sub put_string {
   my $env = shift;
   my ($x, $y, $text) = @{$env}{qw(x y text)};
+  return if $text eq "";
   loc($x, $y);
   push @TEXTS, [$x, $y, $text];
 }
