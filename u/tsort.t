@@ -13,16 +13,22 @@ require 'exprs.pl';
 # $uses->($expr, [$var])
 # Return true if expression uses specified variable
 #
-my $uses = emap 'uses',  { DEFAULT => sub {
-    my ($u, $expr, $op, @v) = @_;
-    my ($var, $yep) = @$u;
-    for (@v) { return 1 if $_ }
-    return 1 if $yep;
-    if ($expr->[0] eq "VAR" && $expr->[1] eq $var) {
-        return $u->[1] = 1;
-    }
-    return 0;
-} };
+my $uses = emap 'uses',
+  { 
+   DEFAULT => sub {
+     my ($u, $expr, $op, @v) = @_;
+     my ($var, $yep) = @$u;
+     return $yep;
+   },
+   VAR => sub {
+     my ($u, $expr, $op, @v) = @_;
+     return $u->[1] = ($expr->[1] eq $u->[0]);
+   },
+   CON => sub { return 0 },
+   FUN => sub { return 0 },
+   STR => sub { return 0 },
+  };
+
 
 # $vars->($expr) 
 # return list of vars in the expression
@@ -59,8 +65,8 @@ sub tsort_ok {
     for my $var (@t) {
       if (exists $rel->{$var}) {
         my $expr = $rel->{$var};
-        for my $var2 ($t) {
-          next if $done{$t}; # OK for $expr to use this now
+        for my $var2 (@t) {
+          next if $done{$var2}; # OK for $expr to use this now
           return 0 if $uses->($expr, [$var2]);
         }
       }
