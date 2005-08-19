@@ -1,0 +1,22 @@
+
+
+define V {
+        param string text;
+        draw { &put_string; }
+}
+
+define U {
+        param string otext;
+        V v(text=otext);
+}
+
+
+
+U u(otext="carrot");
+
+__END__
+
+sub put_string {
+  my $env = shift;
+  print "$env->{text}\n";
+}

@@ -1,0 +1,23 @@
+
+define VV { number n; }
+
+define V extends VV {
+        param string text;
+        draw { &put_string; }
+}
+
+define U  {
+        param string text = "banana";
+        V v(text=text);
+}
+
+
+
+U u;
+
+__END__
+
+sub put_string {
+  my $env = shift;
+  print "$env->{text}\n";
+}
