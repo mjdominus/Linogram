@@ -249,18 +249,17 @@ sub up {
 
   my $env = $self->$meth;
   my $parent = $self->parent;
-  if ($parent) { $env->append_env($parent->up(@_)) }
+  if ($parent) { $env->append_env($parent->over(@_)) }
 
   $env;
 }
 
 sub up_list {
   my ($self, $meth) = @_;
-  my @results;
+  my @results = $self->$meth;
+  my $parent = $self->parent;
+  push @results, $parent->over_list($meth) if $parent;
 
-  for ( ; $self; $self = $self->parent) {
-    push @results, $self->$meth;
-  }
   @results;
 }
 
@@ -305,7 +304,7 @@ sub param_values {
   my $env = $_env->clone();
   my $pvals = Environment->new();
 
-  my $params = $self->up('param_defs');
+  $params = $self->up('param_defs');
 
   for my $name (@$p_order) {
     my $param_exp = $params->lookup($name);

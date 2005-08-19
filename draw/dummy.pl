@@ -7,7 +7,7 @@ sub draw_line {
 
 sub put_string {
   my $env = shift;
-  print "Text '$env->{label}' at ($env->{'x'}, $env->{'y'})\n";
+  print "TEXT '$env->{label}' at ($env->{'x'}, $env->{'y'})\n";
 }
 
 1;

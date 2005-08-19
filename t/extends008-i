@@ -1,0 +1,19 @@
+
+define U {
+  number a, b;
+  constraints { a = b; }
+}
+
+define T {
+  U u;
+}
+
+define TT extends T { }
+
+TT tt;
+
+constraints { tt.u.a = 1; }
+
+draw { &dump_hash; }
+
+__END__
