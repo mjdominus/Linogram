@@ -1,0 +1,26 @@
+
+
+require "box";
+require "label";
+
+define labelbox extends box {
+        param string text = "";
+        label the_label(text=text);
+        draw { top; left; bottom; right; the_label; }
+        constraints { the_label = c; }
+}
+
+
+
+
+labelbox L(text="fooey");
+
+constraints {
+        L.nw = (2,3);
+        L.wd = 4;
+        L.ht = 5;
+}
+
+__END__
+
+require "draw/dummy.pl";

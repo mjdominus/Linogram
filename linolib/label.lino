@@ -2,7 +2,7 @@
 require "point";
 
 define label extends point {
-        param string label;
+        param string text;
         draw { &put_string; }
 }
 

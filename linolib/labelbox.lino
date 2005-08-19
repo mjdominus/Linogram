@@ -4,9 +4,9 @@ require "label";
 
 define labelbox extends box {
         param string text = "";
-        label the_label(label=text);
-        draw { top; left; bottom; right; the_label; }
-        constraints { the_label = c; }
+        label label(text=text);
+        draw { top; left; bottom; right; label; }
+        constraints { label = c; }
 }
 
 
