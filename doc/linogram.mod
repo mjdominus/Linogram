@@ -1,5 +1,5 @@
 
-
+ 
 
 
 =Chapter Tutorial Introduction
@@ -343,9 +343,102 @@ Or we could have a whole string of processes:
 
 If an assembly like this is going to be common, we could define a new
 type to represent it; the type would include five processes and four
-arrows. 
+arrows. A later version of C<linogram> will make it easier to define
+types that contain long sequences of objects like this one does.
 
-=Chapter Reference Manual
+Suppose now that you have drawn a large, complex diagram that involves
+a large number of C<process> objects, and that C<process> was defined
+like this:
+
+        require "box";
+
+        define process extends box { }
+
+That is, you've defined your C<process> object to be nothing more than
+a box.  Suppose that you suddenly decide that you want to see what the
+diagram will look like if all the process boxes are triangles instead.
+No problem, it's easy.  Just replace the definition of C<process>:
+
+        define process {
+           triangle T;
+           point n = T.apex, 
+                 s = base.center,
+                 e = side2.center, 
+                 w = side1.center,
+                 nw = (n+w)/2,  
+                 sw = base.start,
+                 ne = (n+e)/2,  
+                 se = base.end, 
+                 c = (n + s) / 2;
+           number wd = T.wd, ht = T.wd;
+           hline top, bottom; 
+           vline left, right;
+           constraints {
+           }
+           draw { T; }
+        }
+
+
+=Chapter Language Reference
+
+=bulletedlist 
+
+=item C<*>I<foo> means zero or more instances of I<foo>
+
+=item C<+>I<foo> means one  or more instances of I<foo>
+
+=item C<?>I<foo> means zero or one  instances of I<foo>
+
+=item C<\<foo\>> means that "foo" must appear literally
+
+=endbulletedlist 
+
+        program = *declaration perl_code
+
+        declaration = require | definition | feature
+                    | draw_section | constraint_section
+
+        require = <require> string <;>
+
+        definition = <define> name ?(<extends> name) <{> *declaration <}>
+
+        feature = ?<param> type declarator *(<,> declarator) <;>
+
+        declarator = name 
+                     ?( <(> param-spec *(<,> param-spec) <)> )
+                     ?( <=> expression )
+
+        param-spec = cname <=> expression
+
+        draw_section = <draw> <{> *drawable <}>
+
+        drawable = <&> name | cname
+
+        type = C<number> | C<string> | name
+
+        cname = name | cname <.> name
+
+        constraint_section = <constraints> <{> *constraint <}>
+
+        constraint = expression +(<=> expression)
+
+        expression = term + expression | term - expression
+
+        term = atom * expression | atom / expression
+
+        atom = funcall
+             | name
+             | tuple
+             | number
+             | <(> expression <)>        
+
+        funcall = name <(> expression <)> 
+
+        tuple = <(> expression <,> expression *(<,> expression) <)>
+ 
+        perl_code = <__END__\n> (any perl code)
+
+=Chapter Language Reference
 
 The basic C<linogram> object is called a I<feature>.  A feature
 contains some instructions about how it should be drawn, a list of
@@ -403,9 +496,19 @@ or:
 
         start + end = 2 * center;
 
+As a convenience, an equation may have more than one equal sign;
+something like this:
+
+        a = b = c = d;
+
+is interpreted as shorthand for this:
+
+        a = b;
+        a = c;
+        a = d;
+
 The important thing to know is that equations I<must> be linear.  No
 multiplication or division may involve more than one feature.
-
 
         * type definitions
         * constraint and drawable declarations
@@ -415,6 +518,76 @@ multiplication or division may involve more than one feature.
 Type definitions are just more collections of 
 
 =endbulletedlist
+
+=Chapter Running C<linogram>
+
+=Chapter Standard feature definitions
+
+=Section Points
+
+=Section Lines
+
+line, hline, vline, arrow
+
+=Section Labels
+
+A label is a location (that is, a point) with which a string is
+associated.    The C<label> object has the following parameters:
+
+=bulletedlist
+
+=item C<text> (mandatory): the text that is displayed
+
+=item C<font>: Defaults to C<times>
+
+=item C<size>: Defaults to 10
+
+=endbulletedlist
+
+=Section Boxes
+
+=subsection box
+
+A box is a rectangle, with its edges oriented parallel to the axes.
+The edges are named C<top>, C<bottom>, C<left>, and C<right>.  C<top>
+and C<bottom> are C<hline>s; C<left> and C<right> are C<vline>s>
+
+The four vertices of the box are C<point>s named C<nw>, C<ne>, C<sw>,
+and C<se>.  The midpoints of the four sides are C<n>, C<s>, C<w>, and
+C<e>.  The center of the box is a point named C<c>.
+
+The height and width of the box are C<ht> and C<wd>, respectively.
+
+=subsection labelbox
+
+A C<labelbox> is the same as a C<box>, except that it has a C<label> in
+the middle.  The C<label>'s C<text> parameter is exported as C<text>,
+but the others, such as C<font>, must be accessed as C<label.font>, etc.
+
+=subsection ellipse
+
+An C<ellipse> is similar to a box, except that it's elliptical.  The C<ht>
+and C<wd> variables are the lengths of the major and minor axes of the
+ellipse, which are always vertical and horizontal.  
+
+The C<ellipse> has C<n>, C<nw>, etc., but no C<top>, C<bottom>,
+C<left>, or C<right>.
+
+=subsection oval
+
+An C<oval> is like a C<box>, except that the corners may be rounded
+off.  The radius of curvature of the rounded corners is C<rad>.  
+
+
+=Chapter Standard Drawing Libraries
+
+=Section PostScript Output
+
+=Section Bitmap Output
+
+=Section ASCII-Art Output
+
+=Chapter Implementing Drawing Libraries
 
 ----------------------------------------------------------------
 

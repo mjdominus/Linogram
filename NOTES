@@ -951,3 +951,81 @@ default, or else the behavior is broken.
 
 Idea: just make the change to the grammar; see if any of the tests
 fail. It might Just Work.
+
+Note added 20050828 - seems to Just Work.
+
+20050828
+
+Suppose textbox is a box with a text param.  Then we might have two
+builtin functions,
+
+        textwidth(string)
+and
+        textheight(string)
+
+and do
+
+        param margin = 0.2
+
+and then
+
+        constraints {
+          ht = textheight(label) + margin*2;
+          wd = textwidth(label) + margin*2;
+        }
+
+so the size of the box is chosen based on its contents.  This should
+be possible, and Pic (and most drawing systems) won't do it.
+
+We could even have
+
+        param string format = "squarish";
+        constraints {
+          ht = textheight(label, format) + margin*2;
+          wd = textwidth(label, format) + margin*2;
+        }
+        
+
+where "squarish" tries to make the text more or less a square, and
+"long" tries to tring it into a single line, etc.
+
+
+20050828
+
+Instead of
+
+        ne = c + r * (1.4142, 1.4142) / 2;
+
+or even
+
+        ne = c + r * (sqrt(2), sqrt(2));
+
+have a builtin cis() function whose value is a tuple:
+
+        ne = c + r * cis(45);
+
+in general, cis(x) is (cos(x), sin(x))
+
+20050828
+
+Possibly useful:
+
+        x[A, B]
+
+("x of the way from A to B") which means
+
+        A + (1-x) * (B-A)
+
+a la MetaPost.
+
+20050828
+
+        define A extends B { 
+          ...
+          draw also { ... }
+        }
+
+"draw also" differs from "draw" in that the items in the drawables
+list are drawn *in addition to* those in the parent type's drawables
+list, rather than *instead of* them.
+

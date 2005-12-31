@@ -178,7 +178,7 @@ $definition = labeledblock($Defheader, $Declaration)
        my $f = "$outputdir/$name.linoc";
        if (open my($O), ">", $f) {
          local $Data::Dumper::Purity = 1;
-         print $O Data::Dumper->Dump([$TYPES{$name}], ["TYPE_$name"]);
+         print {$O} Data::Dumper->Dump([$TYPES{$name}], ["TYPE_$name"]);
        } else {
          warn "Couldn't open $f: $!; disabling compilation\n";
          undef $outputdir;
