@@ -58,6 +58,11 @@ my $PI = atan2(0, -1);
 my %builtins = (sin => sub { sin($_[0] * $PI / 180) },
                 cos => sub { cos($_[0] * $PI / 180) },
                 sqrt => sub { sqrt($_[0]) },
+                cis => sub { my $a = shift() * $PI / 180;
+                             Value::Tuple->new_const_vals(x => cos($a),
+                                                          y => sin($a),
+                                                         )
+                             },
                );
 
 my %TYPES = ('number' => Type::Scalar->new('number'),

@@ -1006,6 +1006,9 @@ have a builtin cis() function whose value is a tuple:
 
 in general, cis(x) is (cos(x), sin(x))
 
+Finished 20051231.
+
+
 20050828
 
 Possibly useful:

@@ -170,7 +170,8 @@ sub to_value {
     unless ($arg->kindof eq "CONSTANT") {
       lino_error("Argument to function '$name' is not a constant");
     }
-    return Value::Constant->new($builtins->{$name}->($arg->value));
+    my $val = $builtins->{$name}->($arg->value);
+    return UNIVERSAL::isa($val, 'Value') ? $val : Value::Constant->new($val);
   } elsif ($op eq 'TUPLE') {
     my %elements;
     for my $k (keys %{$s[0]}) {

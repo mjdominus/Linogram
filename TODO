@@ -80,3 +80,7 @@ o With the implementation of the new system for parameter variables,
   That's great, but it now means you need some new tests for the
   failure cases.
 
+o Add cis() builtin function; mechanism for functions that return
+  non-constants generally.
+
+  o Done 20051231.

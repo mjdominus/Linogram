@@ -1,0 +1,17 @@
+
+number x0, y0, x30, y30, x45, y45, x60, y60, x90, y90, xm45, ym45;
+
+constraints {
+ (  x0,  y0)    = cis(0);
+ ( x30,  y30 )  = cis(30);
+ ( x45,  y45 )  = cis(45);
+ ( x60,  y60 )  = cis(60);
+ ( x90,  y90 )  = cis(90);
+ ( xm45, ym45 ) = cis(-45);
+}
+
+
+draw { &dump_hash; }
+__END__
+
+require "testutils/dump_hash.pl";

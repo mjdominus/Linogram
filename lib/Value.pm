@@ -219,6 +219,14 @@ sub new {
         } => $class;
 }
 
+sub new_const_vals {
+  my ($base, %tuple) = @_;
+  for my $k (keys %tuple) {
+    $tuple{$k} = Value::Constant->new($tuple{$k});
+  }
+  $base->new(%tuple);
+}
+
 sub scale {
     my ($self, $coeff) = @_;
     my %new_tuple;

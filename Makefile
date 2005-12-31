@@ -26,7 +26,8 @@ SOURCE= linogram.pl $(LIBS) $(LINOLIB) $(DRAW)
 
 TESTS= t/__empty000-i t/__empty000-o t/box001-i t/box001-o		     \
 	t/builtin000-i t/builtin000-o t/builtin001-i t/builtin001-o	     \
-	t/builtin002-i t/builtin002-o t/concat001-i t/concat001-o	     \
+	t/builtin002-i t/builtin002-o t/builtin003-i t/builtin003-o	     \
+	t/concat001-i t/concat001-o					     \
 	t/constraint001-i t/constraint001-o t/constraint002-i		     \
 	t/constraint002-o t/constraint003-i t/constraint003-o		     \
 	t/constraint004-i t/constraint004-o t/constraint005-i		     \
