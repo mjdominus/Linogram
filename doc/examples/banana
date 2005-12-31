@@ -1,3 +1,26 @@
+#
+# From _Games for the Superintelligent_, Jim Fixx, 1972:
+#
+#        A rope over the top of a fence has the same length on each
+#        side and weighs one-third of a pound per foot. On one end of
+#        the rope hangs a monkey holding a banana, and on the other end
+#        a weight equal to the weight of the monkey. The banana weighs
+#        2 ounces per inch. The length of the rope in feet is the same
+#        as the age of the monkey, and the weight of the monkey in
+#        ounces is as much as the age of the monkey's mother. The
+#        combined ages of the monkey and its mother is 30
+#        years. One-half the weight of the monkey plus the weight of
+#        the banana is one-fourth the sum of the weights of the rope
+#        and the weight. The monkey's mother is one-half as old as the
+#        monkey will be when it is three times as old as its mother was
+#        when she was one-half as old as the monkey will be when it is
+#        as old as its mother will be when she is four times as old as
+#        the monkey was when it was twice as old as its mother was when
+#        she was one-third as old as the monkey was when it was as old
+#        as its mother was when she was three times as old as the
+#        monkey was when it was one-fourth as old as its is now. How
+#        long is the banana?
+#
 
 define thing {
   param number density;
@@ -6,17 +29,43 @@ define thing {
   draw { &dump_all; }
 }
 
-thing banana(density = 24/16), rope(density = 1/3);
+thing rope(density = 1/3),   # "A rope...weighs one-third of a pound per foot."
+    banana(density = 24/16); # "The banana weighs 2 ounces per inch."
+                             # = 24/16 lb / ft
+
 number monkey_age, mother_age;
 number monkey_weight, weight_weight;
 
 constraints { 
-  monkey_weight * 16 = mother_age;
-  monkey_age + mother_age = 30;
-  rope.length = monkey_age;
-  monkey_weight / 2 + banana.weight  = 1/4 * (rope.weight + weight_weight);
-  mother_age = 1/2 * 3 * 1/2 * 1 * 4 * 2 * 1/3 * 1 * 3 * 1/4 * monkey_age;
+
+  # "...on the other end a weight equal to the weight of the monkey."
+
   monkey_weight = weight_weight;
+
+  # "The weight of the monkey IN OUNCES is as much as the age of the
+  # monkey's mother"
+
+  monkey_weight * 16 = mother_age;
+
+  # "The combined ages of the monkey and its mother is 30 years."
+
+  monkey_age + mother_age = 30;
+
+  # "The length of the rope in feet is the same as the age of the
+  # monkey"
+
+  rope.length = monkey_age;
+
+  # "One-half the weight of the monkey plus the weight of the banana
+  # is one-fourth the sum of the weights of the rope and the weight. "
+
+  monkey_weight / 2 + banana.weight  = 1/4 * (rope.weight + weight_weight);
+
+  # "The monkey's mother is one-half as old as ... when it was
+  # one-fourth as old as its is now."
+
+  mother_age = 1/2 * 3 * 1/2 * 1 * 4 * 2 * 1/3 * 1 * 3 * 1/4 * monkey_age;
+
 }
 
 draw { banana; }
