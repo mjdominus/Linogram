@@ -84,3 +84,5 @@ o Add cis() builtin function; mechanism for functions that return
   non-constants generally.
 
   o Done 20051231.
+
+o Test suite should round off numbers to 8 places or so

@@ -1032,3 +1032,28 @@ a la MetaPost.
 list are drawn *in addition to* those in the parent type's drawables
 list, rather than *instead of* them.
 
+20051231
+
+Comments are quite hard to do.  You need to do them in the lexer, of
+course.  But you can't just insert:
+
+                 ['COMMENT', qr/#.*$/m, sub { "" }],
+
+because if you put it ahead of the STRING tokener, then 
+
+                "I'm a string that happens to contain a # sign"
+
+is lexed incorrectly, and if you put it behind the STRING tokener,
+then 
+
+                # I'm a comment that happens to contain "quote marks"
+
+is lexed incorrectly.
+
+Solution 1: Get that fix into the regex engine to have it tell you if
+it fell off the string or not.
+
+Solution 2: Newlines in the lexer get tokenized as NEWLINE.  COMMENT
+somehow tells the lexer to discard all the tokens up to the next
+NEWLINE token.  Subsequent NEWLINE tokens are ignored.
+
