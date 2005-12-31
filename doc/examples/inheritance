@@ -1,0 +1,23 @@
+
+number estate, writeoff, share, stranger, cash = 10, debt = 10;
+
+constraints { 
+    estate = cash + debt - writeoff;
+    debt = share + writeoff;
+    stranger = estate / 5 + 1;
+    share = (estate - stranger)/2;
+}
+
+draw { &dump_all; }
+
+__END__
+
+use Data::Dumper;
+sub dump_all {
+  my $h = shift;
+  print Dumper($h);
+#  for my $var (sort keys %$h) {
+#    print "$var = $h->{$var}\n";
+#  }
+}
+
