@@ -1,0 +1,33 @@
+
+define thing {
+  param number density;
+  number length, weight;
+  constraints { density * length = weight; }
+  draw { &dump_all; }
+}
+
+thing banana(density = 24/16), rope(density = 1/3);
+number monkey_age, mother_age;
+number monkey_weight, weight_weight;
+
+constraints { 
+  monkey_weight * 16 = mother_age;
+  monkey_age + mother_age = 30;
+  rope.length = monkey_age;
+  monkey_weight / 2 + banana.weight  = 1/4 * (rope.weight + weight_weight);
+  mother_age = 1/2 * 3 * 1/2 * 1 * 4 * 2 * 1/3 * 1 * 3 * 1/4 * monkey_age;
+  monkey_weight = weight_weight;
+}
+
+draw { banana; }
+
+__END__
+
+use Data::Dumper;
+sub dump_all {
+  my $h = shift;
+  print Dumper($h);
+#  for my $var (sort keys %$h) {
+#    print "$var = $h->{$var}\n";
+#  }
+}
