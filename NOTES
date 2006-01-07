@@ -1057,3 +1057,22 @@ Solution 2: Newlines in the lexer get tokenized as NEWLINE.  COMMENT
 somehow tells the lexer to discard all the tokens up to the next
 NEWLINE token.  Subsequent NEWLINE tokens are ignored.
 
+20060107
+
+Notes on multiplication feature:
+
+* Names are now sufficiently complex (e.g., p.v[12].q.s[x+y].n) that
+  they should have a class to themselves.
+
+* You are also going to need that full-fledged Environment object to
+  deal with things like nested multiplier bindings.  Environments
+  should be arrays of namespaces which can be collapsed into a single
+  hash by a convenient method.
+
+* Variables v[12] where the subscript is a constant are just like any
+  other variable as far as qualification and generation of
+  constraints.  The complexity arises for things like v[n] and v[n+1].
+
+* So the implementation strategy should be: add v[12] support first,
+  v[n] support after.
+
