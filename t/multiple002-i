@@ -1,0 +1,28 @@
+
+
+require "point";
+require "line";
+
+define polygon[N] closed {
+  point v[N];
+  line  e[N];
+  constraints {
+    e[i].start = v[i];
+    e[i].end = v[i+1];
+  }
+}
+
+define quadrilateral {
+  polygon[4] P;
+}
+
+quadrilateral myquad;
+
+constraints {
+  myquad.P.v[0] = (2,1);
+  myquad.P.v[1] = (1,-2);
+  myquad.P.v[2] = (-2,-1);
+  myquad.P.v[3] = (-1,2);
+}
+
+
