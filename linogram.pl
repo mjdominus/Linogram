@@ -71,7 +71,7 @@ my %TYPES = ('number' => Type::Scalar->new('number'),
             );
 
 my @keywords = map [uc($_), qr/\b$_\b/],
-  qw(constraints define extends draw param require);
+  qw(constraints define extends draw param require open closed);
 
 sub lino_lexer {
   my $input = shift;
@@ -104,6 +104,8 @@ sub lino_lexer {
                  ['RPAREN',     qr/[)]/],
                  ['LBRACE',     qr/[{]/],
                  ['RBRACE',     qr/[}]\n*/],
+                 ['LBRACK',     qr/\[/],
+                 ['RBRACK',     qr/\]/],
                  ['TERMINATOR', qr/;\n*/],
                  ['WHITESPACE', qr/\s+/, sub { "" }],
                  ));
@@ -113,9 +115,10 @@ sub lino_lexer {
 ################################################################
 
 my ($atom, $base_name, $constraint, $constraint_section, $declaration,
-    $declarator, $defheader, $definition, $drawable, $draw_section, 
-    $expression, $extends, $funapp, $name, $param_spec,
-    $perl_code, $program, $require_decl, $term, $tuple, $type, );
+    $declarator, $defheader, $definition, $drawable, $draw_section,
+    $expression, $extends, $funapp, $mult_exp, $mult_var, $name,
+    $number, $param_spec, $perl_code, $program, $require_decl, $term,
+    $tuple, $type, );
 
 my $Atom               = parser { $atom->(@_) };
 my $Base_name          = parser { $base_name->(@_) };
@@ -130,7 +133,10 @@ my $Drawable           = parser { $drawable->(@_) };
 my $Expression         = parser { $expression->(@_) };
 my $Extends            = parser { $extends->(@_) };
 my $Funapp             = parser { $funapp->(@_) };
+my $Mult_exp           = parser { $mult_exp->(@_) };
+my $Mult_var           = parser { $mult_var->(@_) };
 my $Name               = parser { $name->(@_) };
+my $Number             = parser { $number->(@_) };
 my $Param_Spec         = parser { $param_spec->(@_) };
 my $Perl_code          = parser { $perl_code->(@_) };
 my $Program            = parser { $program->(@_) };
@@ -141,11 +147,12 @@ my $Type               = parser { $type->(@_) };
 
 @N{$Atom, $Base_name, $Constraint, $Constraint_section, $Declaration,
     $Declarator, $Defheader, $Definition, $Extends, $Draw_section,
-    $Drawable, $Expression, $Funapp, $Name, $Param_Spec,
-    $Perl_code, $Program, $Require_decl, $Term, $Tuple, $Type} =
-qw(atom base_name constraint constraint_section declaration 
-   declarator defheader definition extends draw_section 
-   drawable expression funapp name param_spec 
+    $Drawable, $Expression, $Funapp, $Mult_exp, $Mult_var, $Name,
+    $Number, $Param_Spec, $Perl_code, $Program, $Require_decl, $Term,
+    $Tuple, $Type} =
+  qw(atom base_name constraint constraint_section declaration
+   declarator defheader definition extends draw_section drawable
+   expression funapp mult_exp mult_var name number param_spec
    perl_code program require_decl term tuple type);
 
 ################################################################
@@ -156,13 +163,13 @@ $program = star($Definition
               )
          - option($Perl_code) - $End_of_Input;
 
-$defheader = _("DEFINE") - _("IDENTIFIER") - $Extends
-  >> sub { ["DEFINITION", @_[1,2] ]};
+$defheader = _("DEFINE") - _("IDENTIFIER") - option($Mult_var) - $Extends
+  >> sub { ["DEFINITION", @_[1,2,3] ]};
 
 $definition = labeledblock($Defheader, $Declaration)
   >> sub {
      my ($defheader, @declarations) = @_;
-     my ($name, $extends) = @$defheader[1,2];
+     my ($name, $mult_var, $extends) = @$defheader[1,2,3];
      my $extended_type = (defined $extends) ? $TYPES{$extends} : undef;
      my $new_type;
 
@@ -218,6 +225,8 @@ $declaration = option(_("PARAM")) - $Type
 $declarator = _("IDENTIFIER") 
             - option(_("LPAREN")  - commalist($Param_Spec) - _("RPAREN")
                      >> sub { $_[1] }
+                  |
+                     $Mult_var 
                     )
             - option(_("EQUALS") - $Expression >> sub { $_[1] })
   >> sub {
@@ -304,7 +313,7 @@ $term = operator($Atom,
 $atom = $Funapp
       | $Name > sub { Expression->new_var($_[0]) }
       | $Tuple
-      | lookfor("NUMBER", sub { Expression->new('CON', $_[0][1]) })
+      | $Number
       | lookfor("STRING", sub { Expression->new('STR', $_[0][1]) })
       | _('OP', '-') - $Expression
             >> sub { Expression->new('-', Expression->new('CON', 0), $_[1]) }
@@ -324,7 +333,13 @@ $name = $Base_name - star(_("DOT") - _("IDENTIFIER") >> sub { $_[1] })
             >> sub { join(".", $_[0], @{$_[1]}) }
         ;
 
-$base_name = _"IDENTIFIER";
+$base_name = _("IDENTIFIER") - option($Mult_exp) >> sub { "$_[0]$_[1]" } ;
+
+$mult_exp = _("LBRACK") - $Expression - _("RBRACK") >> sub { $_[1] } ;
+
+$mult_var = _("LBRACK") - ($Number | $Name) - _("RBRACK") >> sub { $_[1] } ;
+
+$number = lookfor("NUMBER", sub { Expression->new('CON', $_[0][1]) });
 
 $tuple = _("LPAREN")
        - commalist($Expression) / sub { @{$_[0]} > 1 }

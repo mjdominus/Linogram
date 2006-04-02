@@ -80,4 +80,6 @@ for my $infile (@inputs) {
 
 if (@BAD) {
   print join "\n", map("# $_", "Failed:", @BAD), "";
+  my $failures = @BAD == 1 ? "failure" : "failures";
+  print "# " . @BAD . " $failures\n";
 }

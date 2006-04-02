@@ -86,3 +86,9 @@ o Add cis() builtin function; mechanism for functions that return
   o Done 20051231.
 
 o Test suite should round off numbers to 8 places or so
+
+o Why have "contstraints { ... } "?  It should be unambiguous if
+  constraints just appear in the definition without any such tagging.
+  Similarly it should be possible to abbreviate  "draw { X }" to just
+  "draw X;" when there's only one X.
+
