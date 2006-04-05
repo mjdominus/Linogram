@@ -39,7 +39,7 @@ sub lookfor {
     debug "Looking for token [@$wanted]\n";
     unless (defined $input) {
       debug "Premature end of input\n";
-      die ['TOKEN', $input, $wanted];
+      die ['TOKEN', $input, undef, $wanted];
     }
     my $next = head($input);
     debug "Next token is [@$next]\n";
@@ -47,7 +47,7 @@ sub lookfor {
       next unless defined $wanted->[$i];
       unless ($wanted->[$i] eq $next->[$i]) {
         debug "Token mismatch\n";
-        die ['TOKEN', $input, $wanted];
+        die ['TOKEN', $input, undef, $wanted];
       }
     }
     my $wanted_value = $value->($next, $u);
@@ -63,7 +63,7 @@ sub End_of_Input {
   my $input = shift;
   debug "Looking for End of Input\n";
   return (undef, undef) unless defined($input);
-  die ["End of input", $input];
+  die ["End of input", $input, undef];
 }
 $End_of_Input = \&End_of_Input;
 bless $End_of_Input => __PACKAGE__;
@@ -112,16 +112,17 @@ sub alternate {
       debug "Trying alternative $q/$np\n";
       eval { ($v, $newinput) = $_->($input) };
       if ($@) {
+        my $subparser = $_;
         die unless ref $@;
         debug "Failed alternative $q/$np\n";
-        push @failures, $@;
+        push @failures, [$N{$subparser}, $@];
       } else {
         debug "Matched alternative $q/$np\n";
         return ($v, $newinput);
       }
     }
     debug "No alternatives matched in $N{$p}; failing\n";
-    die ['ALT', $input, \@failures];
+    die ['ALT', $input, $N{$p}, \@failures];
   };
   $N{$p} = "(" . join(" | ", map $N{$_}, @p) . ")";
   return $p;
@@ -156,8 +157,9 @@ sub concatenate {
       $q++;
       eval { ($v, $input) = $_->($input) };
       if ($@) {
+        my $name = $N{$_};
         die unless ref $@;
-        die ['CONC', $input, [\@succeeded, $@]];
+        die ['CONC', $input, $N{$p}, [\@succeeded, $@, $name]];
       } else {
         debug "Matched concatenated component $q/$np\n";
         push @succeeded, $N{$_};
@@ -373,14 +375,14 @@ sub display_failures {
   $depth ||= 0;
   my $I = "  " x $depth;
   unless (ref $fail) { die $fail }
-  my ($type, $position, $data) = @$fail;
+  my ($type, $position, $pname, $data) = @$fail;
   my $pos_desc = "";
   while (length($pos_desc) < 40) {
     if ($position) {
       my $h = head($position);
       $pos_desc .= "[@$h] ";
     } else {
-      $pos_desc .= "End of input ";
+      $pos_desc .= ">< ";
       last;
     }
     $position = tail($position);
@@ -393,13 +395,19 @@ sub display_failures {
   } elsif ($type eq 'End of input') {
     print $I, "Wanted EOI instead of '$pos_desc'\n";
   } elsif ($type eq 'ALT') {
-    print $I, ($depth ? "Or any" : "Any"), " of the following:\n";
+    print $I, "Parser '$pname' was an alternation.\n";
     for (@$data) {
-      display_failures($_, $depth+1);
+      my ($subparser, $failure) = @$_;
+      print $I, "Alternative '$subparser' failed because:\n";
+      display_failures($failure, $depth+1);
     }
   } elsif ($type eq 'CONC') {
-    my ($succeeded, $subfailure) = @$data;
-    print $I, "Following (@$succeeded), got '$pos_desc' instead of:\n";
+    my ($succeeded, $subfailure, $failed) = @$data;
+    my $Items = @$succeeded == 1 ? "Item" : "Items";
+    print $I, "Parser '$pname' was a concatenation.\n";
+    print $I, "$Items @$succeeded matched OK.\n" if @$succeeded;
+    print $I, "Item $failed was the one that failed.\n";
+    print $I, "It failed on tokens $pos_desc.  Here's why:\n";
     display_failures($subfailure, $depth+1);
   } else {
     die "Unknown failure type '$type'\n";
