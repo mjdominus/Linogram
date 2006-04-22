@@ -114,14 +114,15 @@ sub lino_lexer {
 
 ################################################################
 
-my ($atom, $base_name, $constraint, $constraint_section, $declaration,
+my ($atom, $base_name, $closure, $constraint, $constraint_section, $declaration,
     $declarator, $defheader, $definition, $drawable, $draw_section,
-    $expression, $extends, $funapp, $mult_exp, $mult_var, $name,
+    $expression, $extends, $funapp, $mult_exp, $mult_num, $mult_var, $name,
     $number, $param_spec, $perl_code, $program, $require_decl, $term,
     $tuple, $type, );
 
 my $Atom               = parser { $atom->(@_) };
 my $Base_name          = parser { $base_name->(@_) };
+my $Closure            = parser { $closure->(@_) };
 my $Constraint         = parser { $constraint->(@_) };
 my $Constraint_section = parser { $constraint_section->(@_) };
 my $Declaration        = parser { $declaration->(@_) };
@@ -134,6 +135,7 @@ my $Expression         = parser { $expression->(@_) };
 my $Extends            = parser { $extends->(@_) };
 my $Funapp             = parser { $funapp->(@_) };
 my $Mult_exp           = parser { $mult_exp->(@_) };
+my $Mult_num           = parser { $mult_num->(@_) };
 my $Mult_var           = parser { $mult_var->(@_) };
 my $Name               = parser { $name->(@_) };
 my $Number             = parser { $number->(@_) };
@@ -145,14 +147,14 @@ my $Term               = parser { $term->(@_) };
 my $Tuple              = parser { $tuple->(@_) };
 my $Type               = parser { $type->(@_) };
 
-@N{$Atom, $Base_name, $Constraint, $Constraint_section, $Declaration,
+@N{$Atom, $Base_name, $Closure, $Constraint, $Constraint_section, $Declaration,
     $Declarator, $Defheader, $Definition, $Extends, $Draw_section,
-    $Drawable, $Expression, $Funapp, $Mult_exp, $Mult_var, $Name,
+    $Drawable, $Expression, $Funapp, $Mult_exp, $Mult_num, $Mult_var, $Name,
     $Number, $Param_Spec, $Perl_code, $Program, $Require_decl, $Term,
     $Tuple, $Type} =
-  qw(atom base_name constraint constraint_section declaration
+  qw(atom base_name closure constraint constraint_section declaration
    declarator defheader definition extends draw_section drawable
-   expression funapp mult_exp mult_var name number param_spec
+   expression funapp mult_exp mult_num mult_var name number param_spec
    perl_code program require_decl term tuple type);
 
 ################################################################
@@ -163,8 +165,12 @@ $program = star($Definition
               )
          - option($Perl_code) - $End_of_Input;
 
-$defheader = _("DEFINE") - _("IDENTIFIER") - option($Mult_var) - $Extends
-  >> sub { ["DEFINITION", @_[1,2,3] ]};
+$defheader = _("DEFINE") - _("IDENTIFIER") - option($Mult_var) 
+           - $Extends
+           - $Closure
+  >> sub { ["DEFINITION", @_[1,2,3,4] ]};
+
+$closure = option(_("OPEN") | _("CLOSED"));
 
 $definition = labeledblock($Defheader, $Declaration)
   >> sub {
@@ -201,18 +207,21 @@ $definition = labeledblock($Defheader, $Declaration)
 
 $extends = option(_("EXTENDS") - _("IDENTIFIER") >> sub { $_[1] }) ;
 
-$declaration = option(_("PARAM")) - $Type
+$declaration = option(_("PARAM")) - $Type 
+             - option($Mult_num)
              - commalist($Declarator) - _("TERMINATOR")
-                 >> sub { my ($is_param, $type, $decl_list) = @_;
+                 >> sub { my ($is_param, $type, $mult, $decl_list) = @_;
 			  unless (exists $TYPES{$type}) {
 			    lino_error("Unknown type name '$type' in declaration '@_'\n");
 			  }
                           for (@$decl_list) {
                             $_->{TYPE} = $type;
+                            $_->{MULT} = $mult;
                             $_->{PARAM} = $is_param;
                             check_declarator($TYPES{$type}, $_);
                           }
                           {WHAT => 'DECLARATION',
+                           MULTIPLIER => $mult,
                            IS_PARAM => $is_param ? 1 : 0,
                            DECLARATORS => $decl_list };
                         }
@@ -224,16 +233,15 @@ $declaration = option(_("PARAM")) - $Type
 
 $declarator = _("IDENTIFIER") 
             - option(_("LPAREN")  - commalist($Param_Spec) - _("RPAREN")
-                     >> sub { $_[1] }
-                  |
-                     $Mult_var 
-                    )
+                     >> sub { $_[1] })
+            - option($Mult_var | $Mult_num)
             - option(_("EQUALS") - $Expression >> sub { $_[1] })
   >> sub {
     { WHAT => 'DECLARATOR',
       NAME => $_[0],
       PARAM_SPECS => $_[1],
-      EXPR => $_[2],
+      MULTVAR => $_[2],
+      EXPR => $_[3],
     };
   };
 
@@ -319,7 +327,7 @@ $atom = $Funapp
             >> sub { Expression->new('-', Expression->new('CON', 0), $_[1]) }
       | _("LPAREN") - $Expression - _("RPAREN") >> sub {$_[1]};
 
-$funapp = $Name - _("LPAREN") - $Expression - _("RPAREN")
+$funapp = _("IDENTIFIER") - _("LPAREN") - $Expression - _("RPAREN")
             >> sub { 
               my $name = $_[0];
               unless (exists $builtins{$name}) {
@@ -329,15 +337,33 @@ $funapp = $Name - _("LPAREN") - $Expression - _("RPAREN")
             }
         ;
 
-$name = $Base_name - star(_("DOT") - _("IDENTIFIER") >> sub { $_[1] })
-            >> sub { join(".", $_[0], @{$_[1]}) }
+$name = $Base_name 
+      - star(_("DOT") - $Base_name >> sub { $_[1] })
+            >> sub { my @names = ($_[0], @{$_[1]});
+                     my @combined_name;
+                     for my $n (@names) {
+                       my @nn = @$n;
+                       shift @nn;
+                       push @combined_name, @nn == 1 ? @nn : \@nn;
+                     }
+                     \@combined_name;
+                   }
         ;
 
-$base_name = _("IDENTIFIER") - option($Mult_exp) >> sub { "$_[0]$_[1]" } ;
+$base_name = _("IDENTIFIER") - option($Mult_exp) 
+  >> sub { my ($n, $exp) = @_;
+           return ["NAME", $n] unless defined $exp;
+           if ($exp->is_constant) {
+             return ["MNAME_CON", $n . "[" . $exp->value . "]" ];
+           }
+           return [ 'MNAME', $n, $exp ];
+         };
 
 $mult_exp = _("LBRACK") - $Expression - _("RBRACK") >> sub { $_[1] } ;
 
-$mult_var = _("LBRACK") - ($Number | $Name) - _("RBRACK") >> sub { $_[1] } ;
+$mult_num = _("LBRACK") - $Number - _("RBRACK") >> sub { $_[1] } ;
+
+$mult_var = _("LBRACK") - $Name - _("RBRACK") >> sub { $_[1] } ;
 
 $number = lookfor("NUMBER", sub { Expression->new('CON', $_[0][1]) });
 

@@ -80,7 +80,29 @@ sub _constraint_expressions {
 
 sub my_constraint_expressions {
   my $self = shift;
-  @{$self->{C}};
+  my $env = shift;
+  my @results;
+  # At this point, we need to identify the constraint expressions
+  # that might need to be multiplied, and duplicate them
+
+  # Gather the list of constraint variables in each expression
+  # each variable is associated with a range, inferrable from the context
+  # in which it was used
+  # run nested loops over the variables
+  # for each assignment of numeric values to the variables, 
+  # recurse over the expression, calulating the values of its
+  # index expressions
+  # discard or modify  expressions for which index expressions are out of range
+  #  (depending on whether containing figure is open or closed)
+  # generate fixed expressions with no subscripts, and names of the form
+  #  k[13]
+  for my $cexp (@{$self->{C}}) {
+    my @sub_vars = $cexp->subscript_variables;
+    
+
+#    push @results, $cexp;   # Old code
+  }
+  @results;
 }
 
 sub synthetic_constraints {
@@ -255,10 +277,11 @@ sub up {
 }
 
 sub up_list {
-  my ($self, $meth) = @_;
-  my @results = $self->$meth;
+  my ($self, $meth, %opts) = @_;
+  my @args = @{$opts{ARGS}};
+  my @results = $self->$meth(@args);
   my $parent = $self->parent;
-  push @results, $parent->over_list($meth) if $parent;
+  push @results, $parent->over_list($meth, %opts) if $parent;
 
   @results;
 }
@@ -273,7 +296,6 @@ sub over_list {
   for my $name (keys %subchunks) {
     my @sub = $subchunks{$name}->over_list($meth, %opts);
     push @results, map $_->qualify($name), @sub;
-
   }
 
   @results;
@@ -348,7 +370,7 @@ sub constraint_equations {
   for my $expr (@exprs) {
     $expr = $expr->substitute($param_def, $p_order);
   }
-  
+
   my @eqns = map $_->to_equations($builtins, $self), @exprs;
   Constraint_Set->new(@eqns);
 }
@@ -356,7 +378,9 @@ sub constraint_equations {
 sub all_constraint_equations {
   my ($self, $builtins, $param_defs, $p_order) = @_;
 
-  my @constraint_expressions = $self->over_list('my_constraint_expressions');
+  my @constraint_expressions = $self->over_list('my_constraint_expressions'
+                                                ARGS => $param_defs
+                                               );
 
   for my $expr (@constraint_expressions) {
     $expr = $expr->substitute($param_defs, $p_order);
