@@ -18,7 +18,6 @@ sub loc {
 sub draw_line { 
   my $env = shift;
   my ($a, $b, $c, $d) = @{$env}{qw(start.x start.y end.x end.y)};
-  $_ *= -1 for $b, $d;
   loc($a, $b);
   loc($c, $d);
   push @LINES, [$a, $b, $c, $d];
@@ -27,7 +26,6 @@ sub draw_line {
 sub draw_circle { 
   my $env = shift;
   my ($x, $y, $r, $fill) = @{$env}{qw(c.x c.y r fill)};
-  $y *= -1;
   loc($x-$r, $y-$r);
   loc($x+$r, $y+$r);
   push @CIRCLES, [$x, $y, $r, 1-$fill];
@@ -37,7 +35,6 @@ sub put_string {
   my $env = shift;
   my ($x, $y, $text) = @{$env}{qw(x y text)};
   return if $text eq "";
-  $y *= -1;
   loc($x, $y);
   push @TEXTS, [$x, $y, $text];
 }
