@@ -2,6 +2,7 @@
 require "point";
 
 define circle {
+  param number fill = 0;
   point n, s, e, w, nw, ne, sw, se, c;
   number r, d = 2 * r, s2 = sqrt(2) * r;
   constraints {
