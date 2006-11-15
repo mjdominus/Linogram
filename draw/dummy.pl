@@ -12,7 +12,9 @@ sub put_string {
 
 sub draw_circle {
   my $env = shift;
-  print "CIRCLE at ($env->{'c.x'},  $env->{'c.y'}) with radius $env->{'r'}\n";
+  print "CIRCLE at ($env->{'c.x'},  $env->{'c.y'}) with radius $env->{'r'}";
+  if ($env->{'fill'}) { print $env->{fill} == 1 ? " filled" : " filled ($env->{fill})" }
+  print "\n";
 }
 
 1;
