@@ -1,0 +1,18 @@
+
+require "point";
+
+define circle {
+  point n, s, e, w, nw, ne, sw, se, c;
+  number r, d = 2 * r, s2 = sqrt(2) * r;
+  constraints {
+    n = c + ( 0, -r);
+    s = c + ( 0, r);
+    w = c + (-r, 0);
+    e = c + ( r, 0);
+    nw = c + (-s2, -s2);
+    ne = c + ( s2, -s2);
+    sw = c + (-s2,  s2);
+    se = c + ( s2,  s2);
+  }
+  draw { &draw_circle; }
+}
