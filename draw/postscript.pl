@@ -76,7 +76,7 @@ END {
     $x = ($x - $xmin) * $scale + $xoff;
     $y = ($y - $ymin) * $scale + $yoff;
     $r *= $scale;
-    print "$x $y $r 0 360 arc\n";
+    print "newpath $x $y $r 0 360 arc\n";
     if ($fill != 1) { print "  gsave $fill setgray fill grestore\n"; }
     print "  stroke\n";
   }
