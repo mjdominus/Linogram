@@ -1,0 +1,7 @@
+
+require "box";
+
+define square extends box {
+  constraints { ht = wd; }
+}
+

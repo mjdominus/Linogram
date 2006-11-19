@@ -1,0 +1,10 @@
+
+require "line";
+
+define sline extends line {
+  param number slope;
+  constraints {
+    end.y - start.y = slope * (end.x - start.x);
+  }
+}
+
