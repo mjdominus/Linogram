@@ -115,7 +115,7 @@ o Some bug: In your etch-a-sketch pictures (~/blog/etc/...) you tried
 
   What went wrong?
 
-o This sloped line thing is useful.  Maybe put this in the standard library:
+* This sloped line thing is useful.  Maybe put this in the standard library:
 
         define sline extends line {
           param number slope;
@@ -123,6 +123,11 @@ o This sloped line thing is useful.  Maybe put this in the standard library:
             end.y - start.y = slope * (end.x - start.x);
           }
         }
+
+  o Add tests for this
+
+o Tests for square.lino and circle.lino.
+
 
 o Maybe support this new syntax:
 
