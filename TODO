@@ -92,3 +92,70 @@ o Why have "contstraints { ... } "?  It should be unambiguous if
   Similarly it should be possible to abbreviate  "draw { X }" to just
   "draw X;" when there's only one X.
 
+o Some bug: In your etch-a-sketch pictures (~/blog/etc/...) you tried
+  to have a line of slope 2/3.  This appears in eas2-12-3.lino.  You
+  put:
+
+  line L1(start=the_eas.screen.ne);
+  constraints { 
+     ...
+     L1.end.y = the_eas.screen.s.y;
+     L1.end.y - L1.start.y = (2/3) * L1.end.x - L1.start.x;
+  }
+
+  and this worked fine.  But when you moved the first of the L1
+  constraints into the L1 declaration, the line was too long:
+
+  line L1(start=the_eas.screen.ne, end.y = the_eas.screen.s.y);
+  constraints { 
+     ...
+     L1.end.y - L1.start.y = (2/3) * L1.end.x - L1.start.x;
+  }
+
+
+  What went wrong?
+
+o This sloped line thing is useful.  Maybe put this in the standard library:
+
+        define sline extends line {
+          param number slope;
+          constraints {
+            end.y - start.y = slope * (end.x - start.x);
+          }
+        }
+
+o Maybe support this new syntax:
+
+        define hline extends sline(slope=0) {
+          ...
+        }
+
+  I'm not suggesting that we replace the definition of hline with
+  this, just showing an example.  That main point is the specification
+  of parameters in the extends clause.
+
+o What about arcs?  We might like to specify: start and end
+  points, center, radius/diameter, angle.    Problem: nonlinear
+  relationships.  Several different sorts?  (arc_se { point start,
+  end; }; arc_c { point center; number r, d=2*r, angle; } etc?)
+  Probably the arc_se thing is most useful.  
+
+o Add in support for line thickness and dottedness.  
+
+o Make default fill -1, to indicate none, since filling with white and
+  black are both different from this.  Potential problem:  Consider
+  two white-filled circles, which intersect.  The appearance of the
+  diragram will depend on which is drawn first.  Linogram has no
+  method for specifying this.  Maybe guarantee that (A) items will be
+  drawn in the order specified in the draw {} block, and (B) in the
+  default case, items will be drawn in the order they are declared?
+  It should be possible to arrange this.  Will it get us everything
+  that is needed?
+
+
+
+
+
+
+
+        
