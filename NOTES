@@ -1076,3 +1076,118 @@ Notes on multiplication feature:
 * So the implementation strategy should be: add v[12] support first,
   v[n] support after.
 
+20060712
+
+* Idea: instead of being there to define figures, types can also
+  define constraints:
+
+        define joins {
+          line a, b;
+          constraints { a.end = b.start }
+        }
+
+  and now you can:
+
+        line L1, L2;
+        joins(a=L1, b=L2);
+
+  Is there a better abbreviation still?  Note that we can also;
+
+        define joins[N] open {
+          line a[N];
+          constraints { a[N].end = b[N+1].start }
+        }
+
+        line p, q, r, s;
+        joins(a[0]=p, a[1]=q, a[2]=r, a[3]=s);
+
+  Some syntactic sugar here to allow
+
+        joins(p, q, r, s);
+
+  could really improve the expressiveness of the language.
+
+  Similarly, consider a library for doing class inheritance diagrams.
+  One might have
+
+        define inherits_from {
+          class base, derived;
+          arrow arrow(start=base.bottom.c, end=derived.top.c);
+          param vspc = 1;
+          constraints {
+            arrow.start + (0, vspc) = arrow.end;
+          }
+        }
+
+        inherits_from(base=class_A, derived=class_B);
+
+  or even
+
+        define inherits_from[N] {
+          class base, derived[N];
+          ...
+        }
+
+20061119
+
+o Maybe a special operator that provides a shorthand for "x of the way
+  from A to B"?  (Equivalent to (1-x)*A + x*B.)  But here is maybe a
+  better idea:  Allow arbitrary function definitions, in Perl.   So
+  for example:
+
+        function point between(number x, point A, point B);
+
+  which allows type checking to be done, and then a library can supply
+  between():  
+
+        sub between {
+          my ($x, $A, $B) = @_;
+          return (some perl code for constructing the appropriate
+             point object)
+        }
+
+  But maybe this is too much flexibility and too hard to use.    What
+  if the definition were understood by LG itself?  Then it might look
+  like this:
+
+        function point between(number x, point A, point B) {
+          (1-x) * A + x * B;
+        }
+
+  This is essentially a macro with typechecking.  An expression like
+  between(1/2, body.n, screen.n) is expanded during the conversion
+  from expresions to equations and is required to produce something
+  linear, just like any other expression.  We could also have:
+
+        function point midpoint(point A, point B) {
+          between(1/2, A, B);
+        }
+
+  (But now what about recursive calls?  Conditionals?  Is this every
+  useful?)  And we could get rid of the cis() builtin:
+
+        function (number, number) cis(number x) {
+          (cos x, sin x);
+        }
+
+  Except the syntax for return types now becomes hard to parse.
+
+2006119
+
+  linolib should have a type:
+
+        define external extends box {
+          param string filename;
+          draw { &import_image; }
+        }
+
+  Which imports an external JPEG image.  But here you'd have to
+  somehow supply the bounding box information.   So also supply a
+  function:
+
+        external clown_face = imgfile("clown.jpg");
+
+  where the function returns (beforeeqation solving) a value that has
+  the appropriate filename, ht, and wd values.
+
+

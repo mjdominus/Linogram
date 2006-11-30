@@ -105,12 +105,12 @@ sub alternate {
       debug "(At end of input)\n";
     }
     my ($q, $np) = (0, scalar @p);
-    my ($v, $newinput);
+    my ($v, $newinput, $subfailures);
     my @failures;
     for (@p) {
       $q++;
       debug "Trying alternative $q/$np\n";
-      eval { ($v, $newinput) = $_->($input) };
+      eval { ($v, $newinput, $subfailures) = $_->($input) };
       if ($@) {
         my $subparser = $_;
         die unless ref $@;
@@ -118,7 +118,7 @@ sub alternate {
         push @failures, [$N{$subparser}, $@];
       } else {
         debug "Matched alternative $q/$np\n";
-        return ($v, $newinput);
+        return ($v, $newinput, \@failures);
       }
     }
     debug "No alternatives matched in $N{$p}; failing\n";

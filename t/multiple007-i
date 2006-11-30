@@ -1,0 +1,11 @@
+
+define foo[N] {
+  number x[N];
+  constraints { x[i] = x[i+1]; }
+}
+
+foo[2] thingy;
+constraints {
+  thingy.x[0] = 1;
+}
+

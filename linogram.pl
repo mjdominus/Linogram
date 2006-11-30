@@ -114,14 +114,14 @@ sub lino_lexer {
 
 ################################################################
 
-my ($atom, $base_name, $closure, $constraint, $constraint_section, $declaration,
+my ($atom, $name_comp, $closure, $constraint, $constraint_section, $declaration,
     $declarator, $defheader, $definition, $drawable, $draw_section,
     $expression, $extends, $funapp, $mult_exp, $mult_num, $mult_var, $name,
     $number, $param_spec, $perl_code, $program, $require_decl, $term,
     $tuple, $type, );
 
 my $Atom               = parser { $atom->(@_) };
-my $Base_name          = parser { $base_name->(@_) };
+my $Name_comp          = parser { $name_comp->(@_) };
 my $Closure            = parser { $closure->(@_) };
 my $Constraint         = parser { $constraint->(@_) };
 my $Constraint_section = parser { $constraint_section->(@_) };
@@ -147,12 +147,12 @@ my $Term               = parser { $term->(@_) };
 my $Tuple              = parser { $tuple->(@_) };
 my $Type               = parser { $type->(@_) };
 
-@N{$Atom, $Base_name, $Closure, $Constraint, $Constraint_section, $Declaration,
+@N{$Atom, $Name_comp, $Closure, $Constraint, $Constraint_section, $Declaration,
     $Declarator, $Defheader, $Definition, $Extends, $Draw_section,
     $Drawable, $Expression, $Funapp, $Mult_exp, $Mult_num, $Mult_var, $Name,
     $Number, $Param_Spec, $Perl_code, $Program, $Require_decl, $Term,
     $Tuple, $Type} =
-  qw(atom base_name closure constraint constraint_section declaration
+  qw(atom name_comp closure constraint constraint_section declaration
    declarator defheader definition extends draw_section drawable
    expression funapp mult_exp mult_num mult_var name number param_spec
    perl_code program require_decl term tuple type);
@@ -337,8 +337,8 @@ $funapp = _("IDENTIFIER") - _("LPAREN") - $Expression - _("RPAREN")
             }
         ;
 
-$name = $Base_name 
-      - star(_("DOT") - $Base_name >> sub { $_[1] })
+$name = $Name_comp 
+      - star(_("DOT") - $Name_comp >> sub { $_[1] })
             >> sub { my @names = ($_[0], @{$_[1]});
                      my @combined_name;
                      for my $n (@names) {
@@ -350,7 +350,7 @@ $name = $Base_name
                    }
         ;
 
-$base_name = _("IDENTIFIER") - option($Mult_exp) 
+$name_comp = _("IDENTIFIER") - option($Mult_exp) 
   >> sub { my ($n, $exp) = @_;
            return ["NAME", $n] unless defined $exp;
            if ($exp->is_constant) {

@@ -257,3 +257,22 @@ sub list_vars {
   _uniq(@$vars);
 }
 
+use Data::Dumper;
+*_subscript_variables = emap 'subscript_variables',
+  {
+      DEFAULT => sub {
+          my ($u, $expr, $op, @v) = @_;
+          return [map @$_, @v];
+      },
+#      TUPLE => sub {
+#      },
+      VAR => sub {
+          my ($u, $expr, $op, @v) = @_;
+          print "VAR: ", Dumper($expr), "\n";
+      },
+  };
+
+sub subscript_variables {
+  my $vars = _subscript_variables(@_);
+  _uniq(@$vars);
+}

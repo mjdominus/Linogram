@@ -64,17 +64,17 @@ Since C<side1>, C<side2>, and C<base> are lines, each has a start, and
 end, and a center point already defined.  The center of the base is a
 point called C<base.center>.  And since points are defined as having x
 and y coordinates, we can refer to the coordinates of the center of
-the base as C<center.base.x> and C<center.base.y>.
+the base as C<base.center.x> and C<base.center.y>.
 
 We could force the center of the base to be located in a certain place
 by putting in a constraint:
 
-        center.base.x = 3;
-        center.base.y = 4;
+        base.center.x = 3;
+        base.center.y = 4;
 
 which we may abbreviate to 
 
-        center.base = (3, 4);
+        base.center = (3, 4);
 
 The C<(3, 4)> is called a I<tuple>.  C<linogram> uses tuples to
 represent locations and displacements.
@@ -109,7 +109,7 @@ C<linogram> knows from the definition of C<line> that
 for all lines, including C<base>, and so if V<start.y> is the same as
 V<end.y>, it can figure out that C<center.y> is the same also.
 
-If er're going to have a lot of triangles of this sort, it makes sense
+If we're going to have a lot of triangles of this sort, it makes sense
 to wrap all this up in our own type definition:
 
         define triangle {
@@ -219,7 +219,7 @@ and now we can define a particular triangle:
 and we have a triangle whose base is at (7, 3) with a width of 4 and a
 height of 2; C<linogram> figures out where everything else goes.
 
-One final abbrviation might be convenient.  We can define a reference
+One final abbreviation might be convenient.  We can define a reference
 point in the triangle and use it to specify the location of the
 triangle itself instead of the location of the center of the
 triangle's base.  We might put the reference point in the middle of
@@ -263,7 +263,6 @@ If you prefer, you can write it like this:
         triangle T1(wd=4, ht=2, loc=(7,3));
 
 which might look nicer.
-
 
 Now maybe we want two triangles connected by an arrow:
 

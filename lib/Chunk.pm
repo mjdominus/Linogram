@@ -378,8 +378,8 @@ sub constraint_equations {
 sub all_constraint_equations {
   my ($self, $builtins, $param_defs, $p_order) = @_;
 
-  my @constraint_expressions = $self->over_list('my_constraint_expressions'
-                                                ARGS => $param_defs
+  my @constraint_expressions = $self->over_list('my_constraint_expressions',
+                                                ARGS => [$param_defs],
                                                );
 
   for my $expr (@constraint_expressions) {
