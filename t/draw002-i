@@ -1,0 +1,4 @@
+
+number a, b;
+
+draw { a; b; }
