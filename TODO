@@ -157,10 +157,33 @@ o Make default fill -1, to indicate none, since filling with white and
   It should be possible to arrange this.  Will it get us everything
   that is needed?
 
+o Should variables in outer scopes be inherited by variables in inner
+  scopes?  For example, this doesn't work:
+
+        number a;
+        define foo {
+          number b;
+          constraints { b = a; }
+        }
+
+  Because the constraint is looking for foo.a, and there is no such
+  thing.   This raises all sorts of issues, like that type definitions
+  should maybe take place in a hierarchical rather than a flat
+  namespace.  (that is, ROOT.foo, not jut plain foo.)
+
+  This was motivated by:
+
+        number a, b, c;
+
+        define quadratic {
+          param number x;
+          param number y;
+          constraints {
+            a * x * x + b * x + c = y;
+          }
+        }
+
+        quadratic q1(x=1, y=7), q2(x=0, y=2), q3(x=-1, y=0);
 
 
 
-
-
-
-        
