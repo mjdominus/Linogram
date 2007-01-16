@@ -1,0 +1,8 @@
+
+require "point";
+
+define spline {
+  param index N;
+  point control[N];
+  draw { &draw_spline; }
+}

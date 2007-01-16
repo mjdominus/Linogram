@@ -1,5 +1,0 @@
-$VAR1 = bless( {
-                 'length' => '0.479166666666667',
-                 'weight' => '0.71875',
-                 'density' => '1.5'
-               }, 'Environment' );

@@ -952,242 +952,43 @@ default, or else the behavior is broken.
 Idea: just make the change to the grammar; see if any of the tests
 fail. It might Just Work.
 
-Note added 20050828 - seems to Just Work.
+----------------------------------------------------------------
 
-20050828
+20061210
 
-Suppose textbox is a box with a text param.  Then we might have two
-builtin functions,
+You should still allow something like
 
-        textwidth(string)
-and
-        textheight(string)
+        box X rotated 37;
 
-and do
+which makes X a box whose internal coordinate system relates to the
+external one by a 37-degree rotation.  As long as the rotation amount
+is known before the equations are set up, the equations will still be
+linear.  
 
-        param margin = 0.2
+Note that X.s is still the midpoint of the "bottom" side---that is, it
+is still .s in the internal coordinate system, not in the external
+coordinate system, and so is not the globally southmost point.
 
-and then
+Big question: What is the center of rotation?  Maybe the syntax needs
+to be "... rotated 37 about X.c"?
 
-        constraints {
-          ht = textheight(label) + margin*2;
-          wd = textwidth(label) + margin*2;
-        }
+20061210
 
-so the size of the box is chosen based on its contents.  This should
-be possible, and Pic (and most drawing systems) won't do it.
+Here's a purely technical problem.  To transform constraints with
+subscript vars into constraints with contstants, you need the original
+type object around, because a[i] needs to operate on i (use
+substitute_vars to replace it with constant values) but also we need a
+(because we need to look it up in the type object to find its
+declaration to determine the correct range for instantiating i.)
 
-We could even have
+So where to put this method?  It should naturally be a Type method,
+but all the emap stuff you need is in Expression.  Maybe put it in
+Expression and have the Type be the u parameter.
 
-        param string format = "squarish";
-        constraints {
-          ht = textheight(label, format) + margin*2;
-          wd = textwidth(label, format) + margin*2;
-        }
-        
-
-where "squarish" tries to make the text more or less a square, and
-"long" tries to tring it into a single line, etc.
-
-
-20050828
-
-Instead of
-
-        ne = c + r * (1.4142, 1.4142) / 2;
-
-or even
-
-        ne = c + r * (sqrt(2), sqrt(2));
-
-have a builtin cis() function whose value is a tuple:
-
-        ne = c + r * cis(45);
-
-in general, cis(x) is (cos(x), sin(x))
-
-Finished 20051231.
-
-
-20050828
-
-Possibly useful:
-
-        x[A, B]
-
-("x of the way from A to B") which means
-
-        A + (1-x) * (B-A)
-
-a la MetaPost.
-
-20050828
-
-        define A extends B { 
-          ...
-          draw also { ... }
-        }
-
-"draw also" differs from "draw" in that the items in the drawables
-list are drawn *in addition to* those in the parent type's drawables
-list, rather than *instead of* them.
-
-20051231
-
-Comments are quite hard to do.  You need to do them in the lexer, of
-course.  But you can't just insert:
-
-                 ['COMMENT', qr/#.*$/m, sub { "" }],
-
-because if you put it ahead of the STRING tokener, then 
-
-                "I'm a string that happens to contain a # sign"
-
-is lexed incorrectly, and if you put it behind the STRING tokener,
-then 
-
-                # I'm a comment that happens to contain "quote marks"
-
-is lexed incorrectly.
-
-Solution 1: Get that fix into the regex engine to have it tell you if
-it fell off the string or not.
-
-Solution 2: Newlines in the lexer get tokenized as NEWLINE.  COMMENT
-somehow tells the lexer to discard all the tokens up to the next
-NEWLINE token.  Subsequent NEWLINE tokens are ignored.
-
-20060107
-
-Notes on multiplication feature:
-
-* Names are now sufficiently complex (e.g., p.v[12].q.s[x+y].n) that
-  they should have a class to themselves.
-
-* You are also going to need that full-fledged Environment object to
-  deal with things like nested multiplier bindings.  Environments
-  should be arrays of namespaces which can be collapsed into a single
-  hash by a convenient method.
-
-* Variables v[12] where the subscript is a constant are just like any
-  other variable as far as qualification and generation of
-  constraints.  The complexity arises for things like v[n] and v[n+1].
-
-* So the implementation strategy should be: add v[12] support first,
-  v[n] support after.
-
-20060712
-
-* Idea: instead of being there to define figures, types can also
-  define constraints:
-
-        define joins {
-          line a, b;
-          constraints { a.end = b.start }
-        }
-
-  and now you can:
-
-        line L1, L2;
-        joins(a=L1, b=L2);
-
-  Is there a better abbreviation still?  Note that we can also;
-
-        define joins[N] open {
-          line a[N];
-          constraints { a[N].end = b[N+1].start }
-        }
-
-        line p, q, r, s;
-        joins(a[0]=p, a[1]=q, a[2]=r, a[3]=s);
-
-  Some syntactic sugar here to allow
-
-        joins(p, q, r, s);
-
-  could really improve the expressiveness of the language.
-
-  Similarly, consider a library for doing class inheritance diagrams.
-  One might have
-
-        define inherits_from {
-          class base, derived;
-          arrow arrow(start=base.bottom.c, end=derived.top.c);
-          param vspc = 1;
-          constraints {
-            arrow.start + (0, vspc) = arrow.end;
-          }
-        }
-
-        inherits_from(base=class_A, derived=class_B);
-
-  or even
-
-        define inherits_from[N] {
-          class base, derived[N];
-          ...
-        }
-
-20061119
-
-o Maybe a special operator that provides a shorthand for "x of the way
-  from A to B"?  (Equivalent to (1-x)*A + x*B.)  But here is maybe a
-  better idea:  Allow arbitrary function definitions, in Perl.   So
-  for example:
-
-        function point between(number x, point A, point B);
-
-  which allows type checking to be done, and then a library can supply
-  between():  
-
-        sub between {
-          my ($x, $A, $B) = @_;
-          return (some perl code for constructing the appropriate
-             point object)
-        }
-
-  But maybe this is too much flexibility and too hard to use.    What
-  if the definition were understood by LG itself?  Then it might look
-  like this:
-
-        function point between(number x, point A, point B) {
-          (1-x) * A + x * B;
-        }
-
-  This is essentially a macro with typechecking.  An expression like
-  between(1/2, body.n, screen.n) is expanded during the conversion
-  from expresions to equations and is required to produce something
-  linear, just like any other expression.  We could also have:
-
-        function point midpoint(point A, point B) {
-          between(1/2, A, B);
-        }
-
-  (But now what about recursive calls?  Conditionals?  Is this every
-  useful?)  And we could get rid of the cis() builtin:
-
-        function (number, number) cis(number x) {
-          (cos x, sin x);
-        }
-
-  Except the syntax for return types now becomes hard to parse.
-
-2006119
-
-  linolib should have a type:
-
-        define external extends box {
-          param string filename;
-          draw { &import_image; }
-        }
-
-  Which imports an external JPEG image.  But here you'd have to
-  somehow supply the bounding box information.   So also supply a
-  function:
-
-        external clown_face = imgfile("clown.jpg");
-
-  where the function returns (beforeeqation solving) a value that has
-  the appropriate filename, ht, and wd values.
-
+You also need to replace the O{} hash in a type withsomething more
+complicated than a hash, because O maps names to types, and names are
+no longer strings.  There should be a method which takes a type T and
+a name N and returns the type of subchunk N of T (you have "subchunk"
+already, but it needs rewriting), and another method that returns the
+array declaration bounds of subchunk N of T.
 

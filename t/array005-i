@@ -1,0 +1,15 @@
+
+define point {
+  number x, y;
+  draw { &dump_hash; }
+}
+
+point n[1];
+
+constraints { n[0] = (2,3); }
+
+__END__
+
+require 'lib/testutils/dump_hash.pl';
+
+

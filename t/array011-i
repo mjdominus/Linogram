@@ -1,0 +1,11 @@
+
+
+number p[3];
+constraints {
+  p[i] = i+1;
+}
+
+draw { &dump_hash; }
+__END__
+
+require 'lib/testutils/dump_hash.pl';

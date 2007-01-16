@@ -1,0 +1,13 @@
+
+require "point";
+require "line";
+
+define polygon {
+  param index N;
+  point v[N];
+  line e[N];
+  constraints {
+    e[i].start = v[i];
+    e[i].end = v[i+1];
+  }  
+}

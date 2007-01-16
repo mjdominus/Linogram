@@ -1,7 +1,0 @@
-
-require "point";
-
-define spline[N] {
-  point c[N];
-}
-

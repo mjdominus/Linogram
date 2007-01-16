@@ -7,6 +7,11 @@ sub new {
   bless \%vars => $class;
 }
 
+sub empty {
+  my $class = shift;
+  $class->new();
+}
+
 sub clone { 
   my $self = shift;
   $self->new($self->var_hash);
@@ -60,13 +65,15 @@ sub has_var {
 sub vars { keys %{$_[0]} }
 sub var_hash { %{$_[0]} }
 
-
 sub subset {
   my ($self, $name) = @_;
+# XXX BUG HERE: $name might be a single name component like 
+# ["x", EXPR(...)], in which case this code doesn't really work
+  my $name_str = ref($name) && UNIVERSAL::isa($name, "Name") ? $name->to_str : $name;
   my %result;
   for my $k (keys %$self) {
     my $kk = $k;
-    if ($kk =~ s/^\Q$name.//) {
+    if ($kk =~ s/^\Q$name_str.//) {
       $result{$kk} = $self->{$k};
     }
   }
@@ -120,7 +127,8 @@ sub tsort {
     my $expr = $self->lookup($_);
     my @vars = $expr && UNIVERSAL::isa($expr, 'Expression') ? 
       $expr->list_vars : ();
-    $h{$_} = [grep $self->has_var($_), @vars];
+    # TODO Is ->to_str correct here in this next line? 
+    $h{$_} = [grep $self->has_var($_), map $_->to_str, @vars];
   }
   _tsort(\%h);
 }
@@ -148,7 +156,32 @@ sub _tsort {
       --$count{$_}  for @{$h->{$_}};
     }
   }
-  reverse @order;
+  return reverse @order;
+}
+
+# Take an environment that maps names to expressions
+# and a topological ordering of the names
+# and replace each name with its value in each expression in which it appears
+# DESTRUCTIVE
+sub self_substitute {
+  my ($self, $order) = @_;
+  $order ||= [$self->tsort];
+  for my $var (@$order) {
+    for my $k ($self->vars) {
+      $self->{$k} = $self->{$k}->substitute($self, $order);
+    }
+  }
+}
+
+sub to_str {
+  my $self = shift;
+  my @pairs;
+  for my $var ($self->vars) {
+    my $val = $self->lookup($var);
+    $val = $val->to_str if UNIVERSAL::can($val, 'to_str');
+    push @pairs, "$var => $val";
+  }
+  "ENV { " . join(", ", @pairs) . " }";
 }
 
 1;

@@ -1,0 +1,8 @@
+number a;
+constraints { a = 4; }
+
+draw { &dump_hash; }
+
+__END__
+
+require 'lib/testutils/dump_hash.pl';

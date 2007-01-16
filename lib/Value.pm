@@ -63,7 +63,6 @@ sub new {
 
 sub new_from_var {
   my ($base, $name, $type) = @_;
-  warn "** New_from_var ($name)\n";
   my $class = ref $base || $base;
   $base->new($type->qualified_synthetic_constraints($name));
 }

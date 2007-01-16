@@ -1,0 +1,12 @@
+
+number n[3], m;
+
+constraints {
+  m = n[1] = n[0] * 2 = 4;
+  n[2] = m-1;
+}
+
+draw { &dump_hash; }
+__END__
+
+require 'lib/testutils/dump_hash.pl';

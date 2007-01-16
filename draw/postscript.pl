@@ -23,14 +23,6 @@ sub draw_line {
   push @LINES, [$a, $b, $c, $d];
 }
 
-sub draw_circle { 
-  my $env = shift;
-  my ($x, $y, $r, $fill) = @{$env}{qw(c.x c.y r fill)};
-  loc($x-$r, $y-$r);
-  loc($x+$r, $y+$r);
-  push @CIRCLES, [$x, $y, $r, 1-$fill];
-}
-
 sub put_string {
   my $env = shift;
   my ($x, $y, $text) = @{$env}{qw(x y text)};
@@ -69,16 +61,6 @@ END {
     $_ = ($_ - $xmin) * $scale + $xoff for $a, $c;
     $_ = ($_ - $ymin) * $scale + $yoff for $b, $d;
     print "$a $b moveto $c $d lineto stroke\n";
-  }
-
-  for my $o (@CIRCLES) {
-    my ($x, $y, $r, $fill) = @$o;
-    $x = ($x - $xmin) * $scale + $xoff;
-    $y = ($y - $ymin) * $scale + $yoff;
-    $r *= $scale;
-    print "newpath $x $y $r 0 360 arc\n";
-    if ($fill != 1) { print "  gsave $fill setgray fill grestore\n"; }
-    print "  stroke\n";
   }
 
   for my $l (@TEXTS) {

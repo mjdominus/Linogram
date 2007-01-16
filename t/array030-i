@@ -1,0 +1,15 @@
+
+define snark {
+  param index N;
+  number a[N];
+  constraints { a[i] = i; }
+}
+
+snark s(N=4);
+draw { &dump_hash; }
+
+__END__
+
+require "testutils/dump_hash.pl";
+
+

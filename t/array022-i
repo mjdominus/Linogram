@@ -1,0 +1,22 @@
+
+define snark {
+  number n[4];
+}
+
+define boojum {
+  snark s, t;
+
+  constraints {
+    s.n[i+1] = t.n[i] * 2 + 1;
+    t.n[i] = i+1;
+  }
+}
+
+boojum b;
+
+draw { &dump_hash; }
+
+__END__
+
+require "testutils/dump_hash.pl";
+
