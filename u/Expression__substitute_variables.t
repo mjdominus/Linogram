@@ -1,21 +1,22 @@
 
-
+use lib '../lib';
 use Test::More tests => 13;
 use Environment;
 use Expression;
 use Name;
 
-my $env = Environment->new(a => 1, b => 2, c => 3);
+sub C { Expression->new_constant(@_) }
+
+# Should work with both expressions and unboxed constants
+my $env = Environment->new(a => C(1), b => C(2), c => 3);
 
 my $e1 = Expression->new('*', 
 			 Expression->new('VAR', Name->new('a')),
 			 Expression->new('VAR', Name->new('b')));
-my $f1 = Expression->new('*', 
-			 Expression->new('CON', 1),
-			 Expression->new('CON', 2));
+my $f1 = Expression->new('*', C(1), C(2));
 
 my $e2 = Expression->new('*', 
-			 Expression->new('CON', 3),
+			 C(3),
 			 Expression->new('VAR', Name->new('w')));
 my $f2 = $e2;
 
