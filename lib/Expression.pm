@@ -144,17 +144,18 @@ sub _tuple_to_str {
 		     my $croak;
 		     ($env, $croak) = @$env if ref $env eq 'ARRAY';
 
-                     return $_[1]->new($_[2], 
-				       $name->substitute_subscripts($env))
-			 if $name->is_array;
+
+		     $name = $name->substitute_subscripts($env);
 
 	             my $namestr = $name->to_str;
 		     if ($env->has_var($namestr)) {
-		       $_[1]->new("CON", $env->lookup($namestr));
+			 my $r = $env->lookup($namestr);
+			 return UNIVERSAL::isa($r, 'Expression') ? $r : 
+			     Expression->new('CON', $r);
 		     } elsif ($croak) {
 		       die "Name '$namestr' absent";
 		     } else {
-		       $_[1];
+		       $_[1]->new($_[2], $name);
 		     }},
        });
 
