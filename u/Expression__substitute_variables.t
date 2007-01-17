@@ -1,6 +1,6 @@
 
 
-use Test::More tests => 12;
+use Test::More tests => 13;
 use Environment;
 use Expression;
 use Name;
@@ -45,4 +45,28 @@ for ([$e1, $f1], [$e2, $f2], [$e3, $f3], [$e4, $f4], [$e5, $f5],
   $q = $x->substitute_variables($env);
   is($q->to_str, $after->to_str, $after->to_str);
 }
+
+{
+  my $t2i = Expression->new('VAR', Name->new('t2', 'i'));
+
+  my $e7 = Expression->new('-',
+			   Expression->new('VAR',
+					   Name->new('t2', ['e', $t2i], 'start')),
+			   Expression->new('VAR',
+					   Name->new('t2', ['v', $t2i])));
+  my $c = Expression->new('CON', 3);
+  my $f7 = Expression->new('-',
+			   Expression->new('VAR',
+					   Name->new('t2', ['e', $c], 'start')),
+			   Expression->new('VAR',
+					   Name->new('t2', ['v', $c])));
+
+
+  my $env = Environment->new("t2.i", $c);
+  my $res = $e7->copy->substitute_variables($env);
+  
+  is($res->to_str, $f7->to_str, $e7->to_str);
+}
+			 
+
 
