@@ -1,0 +1,21 @@
+
+define snark {
+  param index N;
+  number n[N];
+}
+
+snark a(N=2), b(N=2);
+
+constraints {
+  a.n[i] = b.n[i] = i;
+}
+
+draw { &dump_hash; }
+
+__END__
+
+require 'lib/testutils/dump_hash.pl';
+
+
+
+
