@@ -5,8 +5,8 @@ use Name;
 my $c12 = Expression->new('CON', 12);
 my $vi  = Expression->new('VAR', my $ni = Name->new("i"));
 my $vj  = Expression->new('VAR', my $nj = Name->new("j"));
-my $vbi  = Expression->new('VAR', my $ni = Name->new("b", "i"));
-my $vbj  = Expression->new('VAR', my $ni = Name->new("b", "j"));
+my $vbi  = Expression->new('VAR', my $nbi = Name->new("b", "i"));
+my $vbj  = Expression->new('VAR', my $nbj = Name->new("b", "j"));
 
 @names =
   (
@@ -34,8 +34,10 @@ my $vbj  = Expression->new('VAR', my $ni = Name->new("b", "j"));
           vi => $vi, vj => $vj,
           ni => $ni, nj => $nj,
           vbi => $vbi, vbj => $vbj,
+          nbi => $nbi, nbj => $nbj,
          );
 
+sub C { Expression->new_constant(@_) }
 sub V { Expression->new(N(@_)) }
 sub N { Name->new(@_) }
 
