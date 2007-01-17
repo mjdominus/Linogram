@@ -1,6 +1,7 @@
 
-
-use Test::More tests => 168;
+# If there are N items in names.pl, then there should be
+# N * (N+2) tests here.  e.g. if 12 names in names.pl, then 168 tests.
+use Test::More tests => 360;
 use lib '../lib', '../lib/testutils';
 use lib './lib', './lib/testutils';
 require 'names.pl';

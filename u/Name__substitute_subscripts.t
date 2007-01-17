@@ -6,8 +6,8 @@ require 'names.pl';
 use Test::More tests => 18;
 
 use Environment;
-my $env = Environment->new(i => 4, j => 3, 
-		'b.i' => 5, 'b.j' => 6
+my $env = Environment->new(i => C(4), j => C(3), 
+		'b.i' => C(5), 'b.j' => C(6),
 	);
 
 for my $i (0 .. 17) {
