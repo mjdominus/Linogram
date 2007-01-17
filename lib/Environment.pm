@@ -171,6 +171,7 @@ sub self_substitute {
       $self->{$k} = $self->{$k}->substitute($self, $order);
     }
   }
+  return $order;
 }
 
 sub to_str {

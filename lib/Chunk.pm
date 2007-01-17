@@ -318,13 +318,12 @@ sub draw {
   unless ($env) {
 #    $env ||= Environment->new();
     my $param_defs = $self->param_defs;
-    my @p_order = $param_defs->tsort;
-    $param_defs->self_substitute(\@p_order);
+    my $p_order = $param_defs->self_substitute();
     my $equations = $self->all_constraint_equations($builtins,
                                                     $param_defs,
-                                                    \@p_order);
+                                                    $p_order);
     my $solutions = Environment->new($equations->values);
-    $env = $self->param_values($solutions, \@p_order);
+    $env = $self->param_values($solutions, $p_order);
     $env->merge_env($solutions);
   }
 

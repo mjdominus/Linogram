@@ -184,6 +184,3 @@ o Should variables in outer scopes be inherited by variables in inner
         }
 
         quadratic q1(x=1, y=7), q2(x=0, y=2), q3(x=-1, y=0);
-
-
-
