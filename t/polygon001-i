@@ -1,0 +1,19 @@
+
+require "polygon";
+
+polygon t1(N=2), t2(N=2);
+
+constraints {
+  t1.v[0] = (0, 0);
+  t1.v[1] = (1, 1);
+  t2.v[i] = t1.v[i-1];
+}
+
+draw { &dump_hash; }
+
+__END__
+
+require 'lib/testutils/dump_hash.pl';
+
+
+
