@@ -1,0 +1,22 @@
+
+define snark open {
+  param index N;
+  number n[N];
+}
+
+
+snark s(N=3), t(N=4);
+constraints  {
+  s.n[i+1] = i;
+  t.n[i-1] = i;
+}
+
+draw { &dump_hash; }
+
+__END__
+
+require 'lib/testutils/dump_hash.pl';
+
+
+
+
