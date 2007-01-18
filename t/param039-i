@@ -1,0 +1,8 @@
+
+define snark {
+  param number n;
+}
+
+define boojum extends snark { }
+
+boojum b(n=1);
