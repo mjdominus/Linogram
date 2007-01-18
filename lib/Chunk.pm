@@ -137,9 +137,12 @@ sub is_param {
   my ($self, $name) = @_;
   my ($base, $rest) = $name->split;
   if (defined $rest) {
-    return $self->subchunk($base)->is_param($rest);
+    my $sc = $self->subchunk($base);
+    return $sc && $sc->is_param($rest);
   } else {
-    return exists $self->{V}{$base};
+    return 1 if exists $self->{V}{$base};
+    my $p = $self->parent;
+    return $p && $p->is_param(Name->new($base));
   }
 }
 
