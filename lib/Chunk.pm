@@ -301,7 +301,9 @@ sub bounds_of {
   my $enclosing_type = $self->enclosing_type($name);
   my $array = $self->subchunk($name);
   if ($array->is_array_type) {
-    my $bounds_expr = $array->bounds_expr->substitute($defs)->fold_constants;
+    my $bounds_expr = $array->bounds_expr
+                            ->substitute_variables($defs)
+                            ->fold_constants;
     if ($bounds_expr->is_constant) {
       return Bounds->new(0,
 			 $bounds_expr->value - 1, 
@@ -476,7 +478,7 @@ sub constraint_equations {
   my @exprs = $self->constraint_expressions;
 
   for my $expr (@exprs) {
-    $expr = $expr->substitute($param_def, $p_order);
+    $expr = $expr->substitute_variables($param_def, $p_order);
   }
   
   my @eqns = map $_->to_equations($builtins, $self), @exprs;
@@ -489,7 +491,7 @@ sub all_constraint_equations {
   my @constraint_expressions = $self->over_list('my_constraint_expressions');
 
   for my $expr (@constraint_expressions) {
-    $expr = $expr->substitute($param_defs, $p_order);
+    $expr = $expr->substitute_variables($param_defs, $p_order);
   }
 
   @constraint_expressions =
@@ -729,7 +731,8 @@ sub base_type { $_[0][0] }
 sub bounds_expr { $_[0][1] }
 sub bounds { 
   my ($self, $params) = @_;
-  my $bounds_expr = $self->bounds_expr->substitute($params)->fold_constants;
+  my $bounds_expr = $self->bounds_expr->substitute_variables($params)
+                                      ->fold_constants;
   if ($bounds_expr->is_constant) {
     return Bounds->new(0, $bounds_expr->value);
   } else {

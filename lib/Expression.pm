@@ -177,48 +177,6 @@ sub _tuple_to_str {
 	},
        });
 
-# Replace parameter variables with their definitions
-# Also folds constants resulting from such replacements
-sub substitute {
-  my ($expr, $param_def, $p_order) = @_;
-  $p_order ||= [ keys %$param_def ];   # XXX Should be tsort
-  my @p_order = @$p_order;
-
-  my ($op, @args) = @$expr;
-  if ($op eq 'VAR') {
-    my ($name) = @args;
-    my $name_str = $name->to_str;
-    my $is_param;
-    my $value;
-
-#    for my $param (@$p_order) {
-#      my $param = shift @p_order;
-#      next unless $param eq $name;
-#      $is_param = 1;
-#      $value = $param_def->{$name};
-#      last;
-#    }
-    if (exists $param_def->{$name_str}) {
-      my $value = $param_def->{$name_str};
-      return $value->substitute($param_def, \@p_order) if defined $value;
-      die "Unspecified parameter '$name_str'";
-    }
-      
-    return $expr;
-
-  } elsif ($op eq 'TUPLE') {
-    return $expr->tuplemap(sub { $_[0]->substitute($param_def, $p_order) });
-  } elsif ($op =~ /\w+/) {      # FIX THIS TEST
-    return $expr;
-  } else {
-    return $expr->new($op, 
-                      map UNIVERSAL::isa($_, 'Expression') 
-                        ? $_->substitute($param_def, $p_order) 
-                        : $_, 
-                      @args);
-  }
-}
-
 sub qualify {
   my ($expr, $prefix) = @_;
   my $q = emap "qualify($prefix)", 
@@ -227,7 +185,7 @@ sub qualify {
                      },
       CON => sub { return $_[1] },
       VAR => sub { $expr->new_var($_[3]->qualify($prefix))  },
-      FUN => sub { return $_[1] },
+      FUN => sub { shift;  my $expr = shift; return $expr->new(@_); },
       TUPLE => sub { 
         return $_[1]->tuplemap(sub{ $_[0]->qualify($prefix) })
       },
@@ -269,7 +227,7 @@ sub to_value {
   } elsif ($op eq 'FUN') {
     # TODO functions here can have only one argument
     my ($name, $arg_exp) = @s;
-    my $arg = $arg_exp->to_value($builtins);
+    my $arg = $arg_exp->to_value($builtins, $context);
     unless ($arg->kindof eq "CONSTANT") {
       lino_error("Argument to function '$name' is not a constant");
     }
