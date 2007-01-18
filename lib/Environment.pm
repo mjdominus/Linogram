@@ -167,7 +167,7 @@ sub self_substitute {
   my ($self, $order) = @_;
   $order ||= [$self->tsort];
   for my $var (@$order) {
-    for my $k ($self->vars) {
+    for my $k (grep defined($self->{$_}), $self->vars) {
       $self->{$k} = $self->{$k}->substitute($self, $order);
     }
   }
