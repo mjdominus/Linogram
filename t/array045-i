@@ -1,0 +1,21 @@
+
+define snark {
+  number n[3];
+}
+
+define boojum extends snark { 
+} 
+
+boojum b;
+
+constraints { b.n[i] = i + 3; }
+
+draw { &dump_hash; }
+
+__END__
+
+require 'lib/testutils/dump_hash.pl';
+
+
+
+
