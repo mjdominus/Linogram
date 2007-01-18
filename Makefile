@@ -133,3 +133,17 @@ wc: .wc
 
 print: 
 	lp $(SOURCE)
+
+doc: $(DOC)
+
+MOD=/home/mjd/FPP/BOOK
+M2T = perl -I$(MOD) $(MOD)/m2t			# MOD-to-text
+M2H = perl -I$(MOD) $(MOD)/m2h			# MOD-to-HTML
+
+doc/linogram.txt: doc/linogram.mod 
+	$(M2T) doc/linogram.mod
+
+doc/linogram.html: doc/linogram.mod
+	$(M2H) doc/linogram.mod
+
+
