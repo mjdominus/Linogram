@@ -1,0 +1,15 @@
+
+require "regpolygon";
+
+
+regpolygon t1(N=4, r=1, c=(0,0));
+
+draw { &dump_hash; }
+
+__END__
+
+require 'lib/testutils/dump_hash.pl';
+
+
+
+

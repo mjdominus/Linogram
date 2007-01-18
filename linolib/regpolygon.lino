@@ -1,0 +1,11 @@
+
+require "polygon";
+
+define regpolygon extends polygon {
+  param number r, rot = 0;
+  point c;
+  constraints {
+    v[i] = r * cis(rot + i*360/N) + c;
+  }
+}
+
