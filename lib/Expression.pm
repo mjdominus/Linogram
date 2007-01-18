@@ -106,6 +106,7 @@ sub emap {
 
 *to_str = emap('to_str',
                { CON => sub { $_[1][1] },
+		 STR => sub { qq{ "$_[1][1]" } },
                  FUN => sub { $_[1][1] . $_[1][2]->to_str },
                  VAR => sub { $_[1][1]->to_str },
 		 TUPLE => sub { 
@@ -393,15 +394,17 @@ sub list_subscript_vars {
 # names reduced modulo whatever.
 *reduce_subscripts = emap 'reduce_subscripts',
     { DEFAULT => sub { shift; my $x = shift;
+		       return unless defined($_[1]) && defined($_[2]);
                        $x->new(@_)
                      },
       CON => sub { return $_[1] },
+      STR => sub { return $_[1] },
       VAR => sub {
         my ($env, $expr, $VAR, $name) = @_;
 	my ($type, $defs) = @$env;
         return $expr unless $name->is_array;
         $name = $name->reduce_subscripts($type, $defs);
-        return $name ? $expr->new_var($name) : ();
+        return $name ? $expr->new_var($name) : undef;
       },
       FUN => sub { return $_[1] },
       TUPLE => sub {

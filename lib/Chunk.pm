@@ -50,7 +50,7 @@ use strict 'vars';
 sub new {
   my ($old, $name, $parent, $closure) = @_;
 
-  $closure = "CLOSED" unless defined $closure;
+  $closure ||= "CLOSED";
   Carp::croak("bad closure '$closure'") 
       unless $closure eq "OPEN" || $closure eq "CLOSED";
 
@@ -555,7 +555,7 @@ sub expand_subscripted_expression {
     my $env = Environment->new(map {$_->{VAR} => $_->{CUR}} @it);
     my $a = $expr->substitute_variables($env);
     my $b = $a->reduce_subscripts([$self, $param_defs]);
-    push @exprs, $b;
+    push @exprs, $b if defined $b;
     for my $i (@it) {
       if ($i->{CUR} < $i->{HI}) {
         $i->{CUR}++;
