@@ -209,7 +209,7 @@ $definition = labeledblock($Defheader, $Declaration)
 
 $extends = option(_("EXTENDS") - _("IDENTIFIER") >> sub { $_[1] }) ;
 
-$closure = option(_("CLOSED") | _("OPEN"));
+$closure = option(_("CLOSED") | _("OPEN")) > sub { uc $_[0] };
 
 $declaration = option(_("PARAM")) - $Type
              - commalist($Declarator) - _("TERMINATOR")
