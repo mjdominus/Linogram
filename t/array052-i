@@ -1,0 +1,26 @@
+
+define snark {
+  param index N;
+  number n[N];
+  constraints { n[2] = 15; }
+}
+
+define boojum extends snark { 
+  constraints { n[0] = 13; }
+} 
+
+boojum b(N=3);
+
+constraints {
+  b.n[1] = 14;
+}
+
+draw { &dump_hash; }
+
+__END__
+
+require 'lib/testutils/dump_hash.pl';
+
+
+
+
