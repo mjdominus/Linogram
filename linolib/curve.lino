@@ -1,7 +1,7 @@
 
 require "point";
 
-define curve {
+define curve open {
   param index N;
   point control[N];
   draw { &draw_curve; }
