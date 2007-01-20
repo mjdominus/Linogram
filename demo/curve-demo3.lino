@@ -1,0 +1,20 @@
+
+require "curve";
+require "circle";
+
+define spot {
+  point p;
+  circle c(r=0.03);
+  constraints { c.c = p; }
+}
+
+curve c(N=4);
+spot s0, s1, s2, s3;
+
+constraints {
+  s0.p = c.control[0] = (0, 0);
+  s1.p = c.control[1] = (2, 0);
+  s2.p = c.control[2] = (.25, 1);
+  s3.p = c.control[3] = (2.25, 1);
+}
+

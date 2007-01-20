@@ -94,14 +94,30 @@ TESTS= t/array000-i t/array000-o t/array001-i t/array001-o		\
 	t/tripeq-i t/tripeq-o t/tuple001-i t/tuple001-o \
 	do_tests Makefile
 
-DOC=doc/linogram.txt doc/syntax.txt demo.lino
+DOC=doc/linogram.txt doc/syntax.txt
+
+DEMO_JPG= demo/curve-demo.jpg demo/curve-demo2.jpg	\
+          demo/curve-demo3.jpg demo/demo.jpg
+
+.SUFFIXES: .ps .gif .jpg .lino
+
+.lino.ps:
+	perl linogram.pl -P draw/postscript.pl $*.lino > $*.ps
+
+PS2JPG=ps2jpg
+PS2GIF=ps2gif
+
+.ps.jpg:
+	$(PS2JPG) < $*.ps > $*.jpg
+
+.ps.gif: 
+	$(PS2GIF) < $*.ps > $*.gif
 
 default: system-tests
 
-demo: demo.ps
+demo: $(DEMO_JPG)
 
-demo.ps: demo.lino linogram.pl draw/postscript.pl $(LINOLIB)
-	perl linogram.pl -P draw/postscript.pl demo.lino > demo.ps
+$(DEMO_JPG): linogram.pl draw/postscript.pl $(LINOLIB)
 
 # do_tests linogram.pl $(LIBS) testutils.pl Makefile
 test: unit-tests system-tests
