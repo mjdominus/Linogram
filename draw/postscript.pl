@@ -44,26 +44,45 @@ sub draw_curve {
   defined(my $N = $env->{N}) or return;
   if ($N < 2) { return }
 
-  my @p = map [$env->{"control[$_].x"},
-               $env->{"control[$_].y"},
-              ], 0 .. $N-1;
-  loc($_->[0], $_->[1]) for @p;
+  my @x = map $env->{"control[$_].x"}, 0 .. $N-1;
+  my @y = map $env->{"control[$_].y"}, 0 .. $N-1;
+  loc($x[$_], $y[$_]) for 0 .. $N-1;
 
   if ($N == 2) {
-    push @LINES, [$p[0][0], $p[0][1],
-                  $p[1][0], $p[1][1],
+    push @LINES, [$x[0], $y[0],
+                  $x[1], $y[1],
                  ];
     return;
   }
 
   # At least three control points
-  my @spline = ($p[0]);
-  for my $i (1 .. $#p-1) {
-    my ($pix, $piy) = @{$p[$i]};
-    my ($pjx, $pjy) = @{$p[$i+1]};
-    push @spline, [$pix, $piy, $pix, $piy, ($pix+$pjx)/2, ($piy+$pjy)/2];
+  my @spline = ([$x[0], $y[0]]);
+  push @spline, [(4*$x[0]+  $x[1]+  $x[2])/6,
+                 (4*$y[0]+  $y[1]+  $y[2])/6,
+                 (2*$x[0]+2*$x[1]+2*$x[2])/6,
+                 (2*$y[0]+2*$y[1]+2*$y[2])/6,
+                 (        3*$x[1]+3*$x[2])/6,
+                 (        3*$y[1]+3*$y[2])/6,
+                 ];
+  for my $i (1 .. $#p-2) {
+    my ($pix, $piy) = ($x[$i],   $y[$i]);
+    my ($pjx, $pjy) = ($x[$i+1], $y[$i+1]);
+    my ($pkx, $pky) = ($x[$i+2], $y[$i+2]);
+    push @spline, [(2*$pix+3*$pjx+  $pkx)/6,
+                   (2*$piy+3*$pjy+  $pky)/6,
+                   (  $pix+3*$pjx+2*$pkx)/6,
+                   (  $piy+3*$pjy+2*$pky)/6,
+                   (       3*$pjx+3*$pkx)/6,
+                   (       3*$pjy+3*$pky)/6,
+                  ];
   }
-  push @spline, [$p[-2][0], $p[-2][1], $p[-2][0], $p[-2][1], $p[-1][0], $p[-1][1]];
+  push @spline, [ (2*$x[-3] + 2*$x[-2] + 2*$x[-1]) / 6,
+                  (2*$y[-3] + 2*$y[-2] + 2*$y[-1]) / 6,
+                  (  $x[-3] +   $x[-2] + 4*$x[-1]) / 6,
+                  (  $y[-3] +   $y[-2] + 4*$y[-1]) / 6,
+                  (                      6*$x[-1]) / 6,
+                  (                      6*$y[-1]) / 6,
+                ];
   push @SPLINES, \@spline;
 }
 

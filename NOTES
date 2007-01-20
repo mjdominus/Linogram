@@ -1011,3 +1011,20 @@ segments:
 
 which has the property of passing through only p0 and p_n.
 It might approach the (p1+p2)/2's too sharply, though.  
+
+Addendum: Yes indeed, the curves look like crap.  Not curvy enough.
+Do better interpolation.  Maybe:
+
+        p0          (4p0+p1+p2)/6  (2p0+2p1+2p2)/6 (p1+p2)/2
+        (3p1+3p2)/6 (2p1+3p2+p3)/6 (p1+3p2+2p3)/6  (3p2+3p3)/6
+        (3p2+3p3)/6 (2p2+3p3+p4)/6 (p2+3p3+2p4)/6  (3p3+3p4)/6
+        ...
+        (3p3+3p4)/6 (2p3+2p4+2p5)/6 (p3+p4+4p5)/6  6p5/6
+
+No, this lacks the smoothness property.  You if you have
+
+        A B C D
+        D E F G ...
+
+Then you need D-C = E-D or it won't be smooth.
+
