@@ -992,3 +992,22 @@ a name N and returns the type of subchunk N of T (you have "subchunk"
 already, but it needs rewriting), and another method that returns the
 array declaration bounds of subchunk N of T.
 
+20070119
+
+There's a bit of a problem with the translation from Linogram's curves
+to PS splines.  PS only does cubic Bezier curves, and I had imagined
+that LG would present arbitrary-degree Bezier curves to the user.  So
+the question arises of how to get the curves I want in PS.
+
+One possibility is that if the user asks for points p0, p1, p2, etc.,
+then generate the PS curve that is piecewise cubic with the following
+segments:
+
+        p0         p1 p1 (p1+p2)/2
+        (p1+p2)/2  p2 p2 (p2+p3)/2
+        (p2+p3)/2  p3 p3 (p3+p4)/2
+        ...
+                         p_n
+
+which has the property of passing through only p0 and p_n.
+It might approach the (p1+p2)/2's too sharply, though.  
