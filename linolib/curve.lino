@@ -1,8 +1,8 @@
 
 require "point";
 
-define spline {
+define curve {
   param index N;
   point control[N];
-  draw { &draw_spline; }
+  draw { &draw_curve; }
 }
