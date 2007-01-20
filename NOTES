@@ -1007,7 +1007,8 @@ segments:
         (p1+p2)/2  p2 p2 (p2+p3)/2
         (p2+p3)/2  p3 p3 (p3+p4)/2
         ...
-                         p_n
+        (p3+p4)/2  p4 p4 p5
+        
 
 which has the property of passing through only p0 and p_n.
 It might approach the (p1+p2)/2's too sharply, though.  
@@ -1028,3 +1029,9 @@ No, this lacks the smoothness property.  You if you have
 
 Then you need D-C = E-D or it won't be smooth.
 
+20070120 
+
+Actually, the first scheme doesn't look as bad as you thought.  There
+was a bug: you were scaling the y coordinates by the x factors instead
+of by the y factors, so the curves were all squashed.  With the bug
+fixed, it looks pretty good.
