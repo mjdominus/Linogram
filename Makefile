@@ -20,7 +20,7 @@ LINOLIB= \
 	linolib/labelbox.lino \
 	linolib/polygon.lino \
 	linolib/regpolygon.lino \
-	linolib/spline.lino
+	linolib/curve.lino
 
 DRAW= \
 	draw/postscript.pl \
