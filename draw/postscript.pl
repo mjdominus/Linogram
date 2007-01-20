@@ -23,13 +23,50 @@ sub draw_line {
   push @LINES, [$a, $b, $c, $d];
 }
 
+sub draw_circle { 
+  my $env = shift;
+  my ($x, $y, $r, $fill) = @{$env}{qw(c.x c.y r fill)};
+  loc($x-$r, $y-$r);
+  loc($x+$r, $y+$r);
+  push @CIRCLES, [$x, $y, $r, 1-$fill];
+}
+
 sub put_string {
   my $env = shift;
   my ($x, $y, $text) = @{$env}{qw(x y text)};
   return if $text eq "";
-  loc($x, $y);
+  loc($x, $y);  # Doesn't correctly allow for text size
   push @TEXTS, [$x, $y, $text];
 }
+
+sub draw_curve {
+  my $env = shift;
+  defined(my $N = $env->{N}) or return;
+  if ($N < 2) { return }
+
+  my @p = map [$env->{"control[$_].x"},
+               $env->{"control[$_].y"},
+              ], 0 .. $N-1;
+  loc($_->[0], $_->[1]) for @p;
+
+  if ($N == 2) {
+    push @LINES, [$p[0][0], $p[0][1],
+                  $p[1][0], $p[1][1],
+                 ];
+    return;
+  }
+
+  # At least three control points
+  my @spline = ($p[0]);
+  for my $i (1 .. $#p-1) {
+    my ($pix, $piy) = @{$p[$i]};
+    my ($pjx, $pjy) = @{$p[$i+1]};
+    push @spline, [$pix, $piy, $pix, $piy, ($pix+$pjx)/2, ($piy+$pjy)/2];
+  }
+  push @spline, [$p[-2][0], $p[-2][1], $p[-2][0], $p[-2][1], $p[-1][0], $p[-1][1]];
+  push @SPLINES, \@spline;
+}
+
 
 END {
   my $wd = $xmax - $xmin;
@@ -63,6 +100,16 @@ END {
     print "$a $b moveto $c $d lineto stroke\n";
   }
 
+  for my $o (@CIRCLES) {
+    my ($x, $y, $r, $fill) = @$o;
+    $x = ($x - $xmin) * $scale + $xoff;
+    $y = ($y - $ymin) * $scale + $yoff;
+    $r *= $scale;
+    print "newpath $x $y $r 0 360 arc\n";
+    if ($fill != 1) { print "  gsave $fill setgray fill grestore\n"; }
+    print "  stroke\n";
+  }
+
   for my $l (@TEXTS) {
     my ($x, $y, $text) = @$l;
     $text =~ s/([\\()])/\\$1/g; # escape
@@ -70,6 +117,17 @@ END {
     $x = ($x - $xmin) * $scale + $xoff;
     $y = ($y - $ymin) * $scale + $yoff;
     print "/msg ($text) def\n\t$x msg stringwidth pop 2 div sub\n\t$y moveto msg show \n";
+  }
+
+  for my $spline (@SPLINES) {
+    my $init = shift @$spline;
+    $_ = ($_ - $xmin) * $scale + $xoff for @$init;
+    print "@$init moveto\n";
+    for my $next_point (@$spline) {
+      $_ = ($_ - $xmin) * $scale + $xoff for @$next_point;
+      print "  @$next_point curveto\n";
+    }
+    print "  stroke\n";
   }
 
   trailer(mode => $mode);
