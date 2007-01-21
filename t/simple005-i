@@ -1,0 +1,11 @@
+
+number x, y, z;
+param number c=b+a, b=a+1, a = 3;
+
+constraints { x = a; y = 2*b; z = 3*c; }
+
+draw { & dump_hash ; }
+
+__END__
+
+require 'lib/testutils/dump_hash.pl';
