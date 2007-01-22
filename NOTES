@@ -1035,3 +1035,29 @@ Actually, the first scheme doesn't look as bad as you thought.  There
 was a bug: you were scaling the y coordinates by the x factors instead
 of by the y factors, so the curves were all squashed.  With the bug
 fixed, it looks pretty good.
+
+20070122
+
+The "design" of drawing libraries---if you can call it that---is
+atrocious.  Using an END block to print out a bunch of text has real
+drawbacks, and is bizarre.   Even ignoring the real technical problems
+of this approach, you want to get other people to write drawing
+libraries, so the API needs not to be bizarre.
+
+A more normal design would be like this:  drawing libraries are normal
+Perl modules.  At startup, linogram loads one or more of these modules
+as directed by the command-line arguments and instantiates an object
+from each.  Drawing functions  are actually method calls on these
+objects.  For example, draw_line turns into
+
+        $_->draw_line for @drawing_components;
+
+Then, just before exiting, linogram calls one more method:
+
+        $_->render for @drawing_components;
+
+One advantage of this approach is that linogram can draw several
+different output formats in one run.  Another is that it is not
+bizarre.
+
+
