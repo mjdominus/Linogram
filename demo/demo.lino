@@ -22,6 +22,17 @@ define bentline {
   }
 }
 
+require "curve";
+define bentline_curved extends bentline {
+  curve c(N=3);
+  constraints {
+    c.control[0] = start;
+    c.control[1] = center;
+    c.control[2] = end;
+  }
+  draw { c; }
+}
+
 labelbox F(text="F"), plus(text="+"), con32(text="32"), 
          times(text="*"), C(text="C"), con59(text="5/9");
 label_line i(toplabel.text="i"), 
@@ -29,7 +40,7 @@ label_line i(toplabel.text="i"),
            l(toplabel.text="l"), 
            m(toplabel.text="m");
 
-bentline k;
+bentline_curved k;
 label klbl(text="k") = k.upper.center - (0.1, 0);
 
 number boxht = 1, boxwd = 1, hspc = 1 + boxwd, vspc = 1 + boxht;
