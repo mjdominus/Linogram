@@ -1,0 +1,19 @@
+
+define snark {
+  param number p = 13;
+}
+
+define boojum {
+  param index N;
+  snark s[N];
+}
+
+boojum b(N=2);
+
+draw { &dump_hash; }
+
+__END__
+
+require 'lib/testutils/dump_hash.pl';
+
+
