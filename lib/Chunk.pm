@@ -358,15 +358,17 @@ sub over {
 
   my %subchunks = $self->my_subchunks;
   for my $name (keys %subchunks) {
-    my $subenv = $subchunks{$name}->over($meth, %opts)->qualify($name);
+    my $subenv = $opts{ENV} ? $opts{ENV}->subset($name) : undef;
+    my $qenv = $subchunks{$name}->over($meth, %opts, ENV => $subenv)
+                                ->qualify($name);
     if ($opts{QUALIFY_VALS}) {
-      for my $vname ($subenv->vars) {
-        my $expr = $subenv->lookup($vname);
+      for my $vname ($qenv->vars) {
+        my $expr = $qenv->lookup($vname);
         next unless defined $expr;
-        $subenv->merge($vname => $expr->qualify($name));
+        $qenv->merge($vname => $expr->qualify($name));
       }
     }
-    $env->append_env($subenv);
+    $env->append_env($qenv);
   }
 
   $env;
@@ -387,10 +389,10 @@ sub up {
 }
 
 sub up_list {
-  my ($self, $meth) = @_;
+  my ($self, $meth, %opts) = @_;
   my @results = $self->$meth;
   my $parent = $self->parent;
-  push @results, $parent->over_list($meth) if $parent;
+  push @results, $parent->over_list($meth, %opts) if $parent;
 
   @results;
 }
@@ -403,9 +405,18 @@ sub over_list {
 
   my %subchunks = $self->my_subchunks;
   for my $name (keys %subchunks) {
-    my @sub = $subchunks{$name}->over_list($meth, %opts);
-    push @results, map $_->qualify($name), @sub;
-
+    my $subenv = $opts{ENV} ? $opts{ENV}->subset($name) : undef;
+    my @sub = $subchunks{$name}->over_list($meth, %opts, ENV => $subenv);
+    if ($self->subchunk($name)->is_array_type) {
+      for my $i ($self->subchunk($name)->bounds($opts{ENV})->range) {
+	my @r = map $_->qualify(Name->new([$name, 
+					   Expression->new_constant($i)])),
+		     @sub;
+	push @results, @r;
+      }
+    } else {
+      push @results, map $_->qualify($name), @sub;
+    }
   }
 
   @results;
@@ -488,7 +499,8 @@ sub constraint_equations {
 sub all_constraint_equations {
   my ($self, $builtins, $param_defs, $p_order) = @_;
 
-  my @constraint_expressions = $self->over_list('my_constraint_expressions');
+  my @constraint_expressions = $self->over_list('my_constraint_expressions',
+						ENV => $param_defs);
 
   for my $expr (@constraint_expressions) {
     $expr = $expr->substitute_variables($param_defs, $p_order);
@@ -734,7 +746,7 @@ sub bounds {
   my $bounds_expr = $self->bounds_expr->substitute_variables($params)
                                       ->fold_constants;
   if ($bounds_expr->is_constant) {
-    return Bounds->new(0, $bounds_expr->value);
+    return Bounds->new(0, $bounds_expr->value - 1);
   } else {
     my $name = $self->name;
     Carp::croak("Unspecificied variable(s) in $name\'s bounds");
