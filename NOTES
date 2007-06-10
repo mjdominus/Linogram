@@ -1060,4 +1060,59 @@ One advantage of this approach is that linogram can draw several
 different output formats in one run.  Another is that it is not
 bizarre.
 
+20070610
 
+The interface to index variables continues to produce problems.  You
+will really need a way to specify the index variable explicitly.  For
+example, consider a collection of n concentric rings of different radii:
+
+        define rings {
+                param index N;
+                param number spacing = 1;
+                ring r[N](rad=s*(i+1));
+        }
+
+Where you want i to be taken to be 0..N-1.  But i was never declared
+and you provided no way to declare it.  If rad were a constraint
+variable, there would be no problem:
+
+        r[i].rad = s*(i+1);
+
+but if it is a parameter, this fails.  
+
+Suggestion: an extended syntax for param variables:
+
+        param index N with iterator i;
+
+or something of the sort.  Actually from a linguistics point of view
+it makes more sense to say something like
+
+        param index i with bound N;
+
+but then what does the i-less version look like?
+
+        param index with bound N;
+
+perhaps?
+
+20070610
+
+Here's your current thinking about the index circularity problem: THe
+program should resolve the index definitions first, from top to
+bottom.  By then it will know how many of each object there are and
+what the tree structure is.  Then it can set up the non-index param
+definitions, which can be as circular as they want.  Then reolve the
+params and solve the equations.
+
+You raised an example like this:
+
+        define snark {
+          param number p = 3;
+        }
+        define boojum {
+          param number N = s[2].p;
+          snark s[N];
+        }
+
+In this new scheme, this example is illegal: indexes can only depend
+on other indices.
