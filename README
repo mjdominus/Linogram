@@ -1,0 +1,21 @@
+There is some documentation in the doc/ directory.  More complete
+documentation is at
+
+	http://hop.perl.plover.com/linogram/
+
+and in chapter 9 of the book "Higher-Order Perl".  (See
+http://hop.perl.plover.com/ .)
+
+The default Makefile target runs the tests.  Unit tests are in t/
+and system tests are in u/ .
+
+To see a quick demonstration of Linogram, use
+	make demo
+
+and then compare the input files, in demo/*.lino, and the output
+files, in demo/*.jpg. 
+
+Linogram's base output is in PostScript, so you will not get the JPEGs
+unless you have ps2jpg installed, but you may also use any other
+PS-to-JPEG converter, such as ImageMagick; modifying the ".ps.jpg"
+target in the Makefile is probably the easiest way to do this.
