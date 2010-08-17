@@ -180,9 +180,9 @@ sub star {
   my $p = shift;
   my ($p_star, $conc);
   $p_star = alternate(T($conc = concatenate($p, sub { $p_star->($_[0]) }),
-                        sub { 
+                        sub {
 #                          print "STAR($_[0], $_[1])\n";
-                          [$_[0], @{$_[1]}] 
+                          [$_[0], @{$_[1]}]
                         }),
                       T($nothing,
                         sub { $null_tuple }),
@@ -231,7 +231,7 @@ sub termilist {
 sub labeledblock {
   my ($label, $contents) = @_;
   my $t;
-  my $p = concatenate(concatenate(concatenate($label, 
+  my $p = concatenate(concatenate(concatenate($label,
                                               lookfor('LBRACE'),
                                              ),
                                   $t = star($contents),
@@ -263,7 +263,7 @@ sub T {
 #      if (ref $values[0] eq 'ARRAY') { print " [\$v[0] = (@{$values[0]})]" };
 #      print "\n";
 #    }
-#    if (@values == 1 && UNIVERSAL::isa($values[0], 'ARRAY')) { 
+#    if (@values == 1 && UNIVERSAL::isa($values[0], 'ARRAY')) {
 #      @values = @{$values[0]};
 #    }
     $value = $transform->(@$value);
@@ -282,7 +282,7 @@ sub V {
     my ($value, $newinput) = $parser->($input);
     debug "Vransforming value produced by $N{$parser}\n";
     debug "Input to $N{$parser}:  ". Dumper($value);
-    $value = $transform->($value); 
+    $value = $transform->($value);
     debug "Output from $N{$parser}: ". Dumper($value);
     return ($value, $newinput);
   };
@@ -410,7 +410,7 @@ sub operator {
   my ($subpart_parser, @ops) = @_;
   my (@alternatives);
   my $opdesc;
-  
+
   for my $op (@ops) {
     my ($operator, $op_func) = @$op;
     my $rest_op;
@@ -428,8 +428,8 @@ sub operator {
 
   my $alts = alternate(@alternatives);
   $N{$alts} = "some operation {$opdesc} $N{$subpart_parser}";
-  
-  my $result = 
+
+  my $result =
     T(concatenate($subpart_parser,
                   star($alts)),
       sub { my ($total, $funcs) = @_;

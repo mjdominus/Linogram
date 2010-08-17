@@ -140,7 +140,7 @@ sub substitute_subscripts {
   my @new;
   for my $c ($self->components) {
     if (ref $c) {
-      push @new, [$c->[0], 
+      push @new, [$c->[0],
                   $c->[1]->substitute_variables($env)];
     } else {
       push @new, $c;
@@ -150,7 +150,7 @@ sub substitute_subscripts {
 }
 
 # TODO: structure here is very similar to substitute_subscripts
-# and perhaps to other methods that apply a per-component 
+# and perhaps to other methods that apply a per-component
 # transformation.  Abstract this out.
 sub reduce_subscripts {
   my ($self, $type, $defs) = @_;
@@ -165,7 +165,7 @@ sub reduce_subscripts {
       if (! $subscript->is_number || $bounds->in_bounds($subscript->value)) {
 	  push @new, [$name, $subscript];
       } else {
-        if ($bounds->closed) { 
+        if ($bounds->closed) {
           my $reduced_subscript = $bounds->modulus($subscript->value);
           push @new, [$name,
                       $subscript->new_constant($reduced_subscript)];

@@ -12,7 +12,7 @@ sub empty {
   $class->new();
 }
 
-sub clone { 
+sub clone {
   my $self = shift;
   $self->new($self->var_hash);
 }
@@ -67,7 +67,7 @@ sub var_hash { %{$_[0]} }
 
 sub subset {
   my ($self, $name) = @_;
-# XXX BUG HERE: $name might be a single name component like 
+# XXX BUG HERE: $name might be a single name component like
 # ["x", EXPR(...)], in which case this code doesn't really work
   my $name_str = ref($name) && UNIVERSAL::isa($name, "Name") ? $name->to_str : $name;
   my %result;
@@ -125,9 +125,9 @@ sub tsort {
   my @vars = $self->vars;
   for (@vars) {
     my $expr = $self->lookup($_);
-    my @vars = $expr && UNIVERSAL::isa($expr, 'Expression') ? 
+    my @vars = $expr && UNIVERSAL::isa($expr, 'Expression') ?
       $expr->list_vars : ();
-    # TODO Is ->to_str correct here in this next line? 
+    # TODO Is ->to_str correct here in this next line?
     $h{$_} = [grep $self->has_var($_), map $_->to_str, @vars];
   }
   _tsort(\%h);
@@ -151,7 +151,7 @@ sub _tsort {
       return ();
     }
     push @order, @next;
-    for (@next) { 
+    for (@next) {
       delete $count{$_};
       --$count{$_}  for @{$h->{$_}};
     }

@@ -1,5 +1,5 @@
 
-package Expression; 
+package Expression;
 use Value;
 
 my %eval_op = ( '+' => sub { $_[0] + $_[1] },
@@ -93,7 +93,7 @@ sub emap {
       @v = $vexpr->[1];
     } elsif ($op eq "FUN") {
       my ($fun_name, @fun_args) = @s;
-      @v = ($fun_name, map $f->($_, $u), @fun_args); 
+      @v = ($fun_name, map $f->($_, $u), @fun_args);
     } elsif (_is_special_case($op)) {
       @v = @s;
     } else {
@@ -109,7 +109,7 @@ sub emap {
 		 STR => sub { qq{ "$_[1][1]" } },
                  FUN => sub { $_[1][1] . $_[1][2]->to_str },
                  VAR => sub { $_[1][1]->to_str },
-		 TUPLE => sub { 
+		 TUPLE => sub {
 		   my ($u, $expr, $op, @v) = @_;
 		   _tuple_to_str(@v);
 		 },
@@ -136,7 +136,7 @@ sub _tuple_to_str {
 # subexpressions of the form [VAR "foo"] are replaced with [CON 37]
 # variables not present in the environment are left alone
 # returns new, modified expression, which may share structure with the original
-*substitute_variables = 
+*substitute_variables =
   emap('substitute_variables',
        {
 	DEFAULT => sub { $_[1]->new(@_[2..$#_]) },
@@ -151,7 +151,7 @@ sub _tuple_to_str {
 	             my $namestr = $name->to_str;
 		     if ($env->has_var($namestr)) {
 			 my $r = $env->lookup($namestr);
-			 return UNIVERSAL::isa($r, 'Expression') ? $r : 
+			 return UNIVERSAL::isa($r, 'Expression') ? $r :
 			     Expression->new('CON', $r);
 		     } elsif ($croak) {
 		       die "Name '$namestr' absent";
@@ -160,7 +160,7 @@ sub _tuple_to_str {
 		     }},
        });
 
-*fold_constants = 
+*fold_constants =
   emap('fold_constants',
        {
 	CON => sub { $_[1] },
@@ -179,14 +179,14 @@ sub _tuple_to_str {
 
 sub qualify {
   my ($expr, $prefix) = @_;
-  my $q = emap "qualify($prefix)", 
+  my $q = emap "qualify($prefix)",
     { DEFAULT => sub { shift; my $x = shift;
                        $x->new(@_)
                      },
       CON => sub { return $_[1] },
       VAR => sub { $expr->new_var($_[3]->qualify($prefix))  },
       FUN => sub { shift;  my $expr = shift; return $expr->new(@_); },
-      TUPLE => sub { 
+      TUPLE => sub {
         return $_[1]->tuplemap(sub{ $_[0]->qualify($prefix) })
       },
     };
@@ -220,7 +220,7 @@ sub to_value {
     my $name = $s[0];
     # XXX TODO add a check here to make sure that the name is monomorphic
     # (a[3] allowed; a[x] not allowed.)
-    return Value::Chunk->new_from_var($name->to_str, 
+    return Value::Chunk->new_from_var($name->to_str,
 				      $context->subchunk($name));
   } elsif ($op eq 'CON') {
     return Value::Constant->new($s[0]);
@@ -252,7 +252,7 @@ sub to_value {
 		'*' => 'mul',
 		'/' => 'div',
 	       );
-  
+
   my $meth = $opmeth{$op};
   if (defined $meth) {
     return $e1->$meth($e2);
@@ -289,7 +289,7 @@ sub _uniq {
 # XXX This does not properly handle a[i] and the like
 # BEGIN { die "Work here" }
 *_list_vars = emap 'list_vars',
-  { 
+  {
       DEFAULT => sub {
           my ($u, $expr, $op, @v) = @_;
           return [map @$_, @v];

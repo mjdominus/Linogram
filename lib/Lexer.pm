@@ -28,7 +28,7 @@ sub tokens {
 
       $buf .= $i if defined $i;
       my @newtoks = $split->($buf);
-      while (@newtoks > 2 
+      while (@newtoks > 2
              || @newtoks && ! defined $i) {
         push @tokens, shift(@newtoks);
         push @tokens, $maketoken->(shift(@newtoks), $typeid) if @newtoks;

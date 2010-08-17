@@ -5,11 +5,11 @@ package Type::Scalar;
 
 sub is_scalar { 1 }
 
-sub add_constraint { 
+sub add_constraint {
   die "Added constraint to scalar type";
 }
 
-sub add_subchunk { 
+sub add_subchunk {
   die "Added subchunk to scalar type";
 }
 
@@ -22,7 +22,7 @@ sub all_leaf_subchunks { "" } # They are themselves leaves
 sub qualified_synthetic_constraints {
   my ($self, $name) = @_;
   Synthetic_Constraint_Set->new
-      ("" => 
+      ("" =>
        Constraint->new($name => 1)
       );
 }
@@ -51,7 +51,7 @@ sub new {
   my ($old, $name, $parent, $closure) = @_;
 
   $closure ||= "CLOSED";
-  Carp::croak("bad closure '$closure'") 
+  Carp::croak("bad closure '$closure'")
       unless $closure eq "OPEN" || $closure eq "CLOSED";
 
   my $class = ref $old || $old;
@@ -62,7 +62,7 @@ sub new {
 }
 
 sub is_scalar { 0 }
-sub is_array_type { 0 } 
+sub is_array_type { 0 }
 
 sub parent { $_[0]{P} }
 sub name { $_[0]{N} }
@@ -165,7 +165,7 @@ sub drawables {
   my @drawables = grep ! $subchunk{$_}->is_scalar, keys %subchunk;
   @drawables = map {
     # XXX $self->subchunk($_) should just be $subchunk{$_}, but
-    # ->my_subchunks for some reason returns array types as if they were 
+    # ->my_subchunks for some reason returns array types as if they were
     # scalars.  This should be fixed.
     if ($self->subchunk($_)->is_array_type) {
       my $subchunk = $_;
@@ -214,13 +214,13 @@ sub all_leaf_subchunks {
                };
   my %base = $self->up($sc)->var_hash;
   while (my ($name, $type) = each %base) {
-    push @all, map {$_ eq "" ? $name : "$name.$_"} 
+    push @all, map {$_ eq "" ? $name : "$name.$_"}
       $type->all_leaf_subchunks;
   }
   @all;
 }
 
-sub subchunk { 
+sub subchunk {
   my ($self, $name, $nocroak) = @_;
   return $self unless defined $name;
 
@@ -230,7 +230,7 @@ sub subchunk {
 
   # XXX encapsulation violation
   my ($basename, $subscript_expr) = ref $first ? @$first : ($first, undef);
-  
+
   if (exists $_[0]{O}{$basename}) {
     my $obj_type = $_[0]{O}{$basename};
     if ($obj_type->is_array_type) {
@@ -244,7 +244,7 @@ sub subchunk {
       if (defined($subscript_expr) && not $nocroak) {
 	Carp::croak("Subscripted non-array object '$basename' in '$name'");
       } else {
-	return $obj_type->subchunk($rest); 
+	return $obj_type->subchunk($rest);
       }
     }
   } elsif (my $parent = $self->parent) {
@@ -278,7 +278,7 @@ sub base_type {
   return $self;
 }
 
-sub bounds { 
+sub bounds {
   my ($self, $nocroak) = @_;
   Carp::croak("Can't get bounds for non-array type '" . $self->name . "'")
       unless $nocroak;
@@ -306,13 +306,13 @@ sub bounds_of {
                             ->fold_constants;
     if ($bounds_expr->is_constant) {
       return Bounds->new(0,
-			 $bounds_expr->value - 1, 
+			 $bounds_expr->value - 1,
 			 $enclosing_type->closure);
     } else {
       return;
     }
   } else {
-    Carp::croak($name->to_str . " in " . $self->name . 
+    Carp::croak($name->to_str . " in " . $self->name .
 		" is not an array type");
   }
 }
@@ -335,12 +335,12 @@ sub draw {
   for my $name ($self->drawables($self->param_defs)) {
 #    if (ref $name) { 		# actually a coderef, not a name
     if (ref $name eq "CODE") { 		# actually a coderef, not a name
-        warn "Calling drawutil(" . $self->name . ")\n" 
+        warn "Calling drawutil(" . $self->name . ")\n"
 	  if $ENV{DEBUG_DRAW};
 	$name->($env);
     } else {
       my $type = $self->subchunk($name);
-      warn "Drawing subchunk '" . $name->to_str . "' (" . $type->name . ")\n" 
+      warn "Drawing subchunk '" . $name->to_str . "' (" . $type->name . ")\n"
 	  if $ENV{DEBUG_DRAW};
       my $subenv = $env->subset(Name->new($name));
       $type->draw($builtins, $subenv, "already solved");
@@ -409,7 +409,7 @@ sub over_list {
     my @sub = $subchunks{$name}->over_list($meth, %opts, ENV => $subenv);
     if ($self->subchunk($name)->is_array_type) {
       for my $i ($self->subchunk($name)->bounds($opts{ENV})->range) {
-	my @r = map $_->qualify(Name->new([$name, 
+	my @r = map $_->qualify(Name->new([$name,
 					   Expression->new_constant($i)])),
 		     @sub;
 	push @results, @r;
@@ -478,9 +478,9 @@ sub param_values {
 }
 
 # Given a type object, en environment defining builtin functions,
-# an environment with parameter definitions, and a topological 
-# ordering of the parameter names, 
-# return a constraint set of the type's constraints, 
+# an environment with parameter definitions, and a topological
+# ordering of the parameter names,
+# return a constraint set of the type's constraints,
 # including those from subtypes, with all parameters replaced by
 # their definitions and all builtin functions evaluated
 sub constraint_equations {
@@ -491,7 +491,7 @@ sub constraint_equations {
   for my $expr (@exprs) {
     $expr = $expr->substitute_variables($param_def, $p_order);
   }
-  
+
   my @eqns = map $_->to_equations($builtins, $self), @exprs;
   Constraint_Set->new(@eqns);
 }
@@ -592,13 +592,13 @@ sub expand_subscripted_expression {
 # reduce the subscripts mod N, where N is the dimension of the
 # array subobject of the type, or (if type is open) discard the
 # expression.
-# 
+#
 # return ($expr) if no subscripts out of bounds, otherwise
 # ($reduced_expression) if closed, () if open
 sub reduce_subscripts {
   my ($self, $expr, $env) = @_;
   my $reduced = $expr->reduce_subscripts($env);
-  return $reduced == $expr ? ($expr) 
+  return $reduced == $expr ? ($expr)
        : $self->is_closed ? ($reduced)
        :                    ();
 }
@@ -651,7 +651,7 @@ sub mul_constant {
 ################################################################
 package Synthetic_Constraint_Set;
 
-sub new { 
+sub new {
   my $base = shift;
   my $class = ref $base || $base;
 
@@ -741,7 +741,7 @@ sub new {
 
 sub base_type { $_[0][0] }
 sub bounds_expr { $_[0][1] }
-sub bounds { 
+sub bounds {
   my ($self, $params) = @_;
   my $bounds_expr = $self->bounds_expr->substitute_variables($params)
                                       ->fold_constants;
@@ -753,8 +753,8 @@ sub bounds {
   }
 }
 
-sub is_array_type { 1 } 
-sub is_scalar { 0 } 
+sub is_array_type { 1 }
+sub is_scalar { 0 }
 sub param_values { Environment->new() }
 
 sub name {
@@ -775,7 +775,7 @@ sub new {
   my $class = shift;
   my ($lo, $hi, $closure) = @_;
   defined $hi or Carp::croak("Bounds->new");
-  
+
   bless [$lo, $hi, $closure] => $class;
 }
 

@@ -3,7 +3,7 @@ package Value;
 use Carp 'croak';
 use strict;
 
-my %op = ("add" => 
+my %op = ("add" =>
 	  {
            "CHUNK,CHUNK"     => 'add_chunks',
            "CHUNK,CONSTANT"   => 'add_chunk_con',
@@ -14,7 +14,7 @@ my %op = ("add" =>
            "STRING,STRING"     => 'concat_strings',
 	   NAME => "Addition",
           },
-	  "mul" => 
+	  "mul" =>
 	  {
 	   NAME => "Multiplication",
 	   "CHUNK,CONSTANT"   => 'mul_chunk_con',
@@ -82,7 +82,7 @@ sub equations { values %{$_[0]->synthetic} }
 
 sub scale {
   my ($self, $coeff) = @_;
-  return 
+  return
     $self->new($self->synthetic->scale($coeff));
 }
 
@@ -103,9 +103,9 @@ sub add_chunk_con {
 
 sub add_chunk_tuple {
   my ($o, $t) = @_;
-  my $synthetic = 
-    $o->synthetic->apply_hash($t->to_hash, 
-			      sub { 
+  my $synthetic =
+    $o->synthetic->apply_hash($t->to_hash,
+			      sub {
 				my ($constr, $comp) = @_;
 				my $kind = $comp->kindof;
 				if ($kind eq "CONSTANT") {
@@ -142,7 +142,7 @@ sub new {
 
 sub str { $_[0]{STRING} }
 sub kindof { "STRING" }
-sub scale { 
+sub scale {
   my ($self, $coeff) = @_;
   die qq{Can't scale string "$self->{STRING}" by $coeff\n};
 }

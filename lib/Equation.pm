@@ -227,7 +227,7 @@ sub equation_groups {
       next unless delete $todo{$eq}; # skip if already did this eqn
       push @group, $eq; # this equation is in the current group
 
-      # For each var in the current equation, add all equations 
+      # For each var in the current equation, add all equations
       # containing that var to the queue
       for my $v ($eq->varlist) {
         push @queue, @{delete $n{$v}};
@@ -282,11 +282,11 @@ sub solve {
         warn "Equation " . $E[$i]->to_string . " failed.\n";
         return;
       }
-      elsif ($E[$j]->is_tautology) { 
+      elsif ($E[$j]->is_tautology) {
         print "Equation $j is now a tautology\n"
           if $DEBUG;
         $self->discard($j);
-        undef $E[$j]; 
+        undef $E[$j];
       }
       $self->print_system(),   print "----------\n" if $DEBUG;
     }
@@ -309,16 +309,16 @@ sub osolve {
         next unless defined $E[$j];
         if ($E[$i]->will_be_reduced_by($E[$j])) {
           $reducing = 1;
-#          print "Reducing ", $E[$i]->to_string, 
+#          print "Reducing ", $E[$i]->to_string,
 #            " with ", $E[$j]->to_string, "\n";
           $E[$i]->reduce_by($E[$j]);
 #          print "  Result: ", $E[$i]->to_string, "\n";
           if ($E[$i]->is_inconsistent) { # print "*** Inconsistent equations\n";
                                          return ;
                                        }
-          elsif ($E[$i]->is_tautology) { 
+          elsif ($E[$i]->is_tautology) {
 #            print "Equation $i is now a tautology\n";
-            undef $E[$i]; 
+            undef $E[$i];
             $self->discard($i);
             last;
           }

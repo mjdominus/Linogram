@@ -73,7 +73,7 @@ sub filter {
 }
 sub iterate_function {
   my ($f, $x) = @_;
-  my $s;         
+  my $s;
   $s = node($x, promise { &transform($f, $s) });
 }
 
