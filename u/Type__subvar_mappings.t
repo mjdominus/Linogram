@@ -11,14 +11,14 @@ my $mt = Environment->empty;
 sub CON { Expression->new_constant(@_) }
 
 my $a_sub_i = 
-  Expression->new_var(Name->new(["a", 
+  Expression->new_var(Name->new(["a",
                                  Expression->new_var(Name->new("i"))
                                 ]));
 
 { my $a_type = Type::Scalar->new("number");
   my $t = Type->new("demo type 1");
   $t->add_subchunk("a", $a_type, CON(37));
-  
+
   my %h = $t->subvar_mappings($a_sub_i, $mt);
 
   is(scalar(keys %h), 1, "one key");
