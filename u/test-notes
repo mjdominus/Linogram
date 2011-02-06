@@ -1,0 +1,14 @@
+The current test failures are caused because of a confusion in the
+representation of component names.  Originally, names were simply
+strings. and are frequently used throughout the program as hask keys,
+for example in the $type->{O} hash mapping subfeature names to
+subfeature types.  But with the introduction of array types, names got
+a more complex representation, as an array of strings and arrays.
+
+Both representations are used in different places.  Using the complex
+representation as a hash key doesn't work properly.  The first step is
+to use the complex representation throughout; the second step is to
+redo all the places that use names as hash keys to preserve the complex
+implementation instead of stringizing it.
+
+MJD 2011-02-06
