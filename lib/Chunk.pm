@@ -184,27 +184,29 @@ sub drawables {
 
 sub add_subchunk {
   my ($self, $name, $type, $count) = @_;
+  $name = Name->new($name) unless ref $name;
+  my $chunk;
   if (defined $count) {
-    $self->{O}{$name} = Type::Array->new($type, $count);
+    $chunk = Chunk->new($name, Type::Array->new($type, $count));
   } else {
-    $self->{O}{$name} = $type;
+    $chunk = Chunk->new($name, $type);
   }
+  $self->{O}{$name->to_str} = $chunk;
 }
 
 sub my_subchunks {
   my $self = shift;
-  my %basic_subchunks = %{$self->{O}};
   my %subchunks;
-  while (my ($n, $t) = each %basic_subchunks) {
+  while (my ($nstr, $chunk)  = each %{$self->{O}}) {
+    my $t = $chunk->type;
     if ($t->is_array_type) {
-      $subchunks{$n} = $t->base_type;
+      $subchunks{$nstr} = $t->base_type;
     } else {
-      $subchunks{$n} = $t;
+      $subchunks{$nstr} = $t;
     }
   }
   %subchunks;
 }
-
 
 sub all_leaf_subchunks {
   my $self = shift;
@@ -232,7 +234,7 @@ sub subchunk {
   my ($basename, $subscript_expr) = ref $first ? @$first : ($first, undef);
 
   if (exists $_[0]{O}{$basename}) {
-    my $obj_type = $_[0]{O}{$basename};
+    my $obj_type = $_[0]{O}{$basename}->type;
     if ($obj_type->is_array_type) {
       if (defined($subscript_expr)) {
 	# TODO array bounds check here, if possible
@@ -423,7 +425,7 @@ sub over_list {
 }
 
 
-# The ->{V} hash should probably be an enironment to begin with
+# The ->{V} hash should probably be an environment to begin with
 # So should the ->{O} hash for that matter
 sub param_defs {
   my $self = shift;
@@ -464,7 +466,9 @@ sub param_values {
     }
   }
 
-  while (my ($name, $type) = each %{$self->{O}}) {
+  while (my ($key, $chunk) = each %{$self->{O}}) {
+    my $type = $chunk->type;
+    my $name = $chunk->name;
     next if $type->is_scalar;
     warn "Checking subobject $name of type $type->{N}...\n" if $DEBUG;
     my $Vo = $type->param_values($env->subset(Name->new($name)));
@@ -806,5 +810,16 @@ sub range {
 sub to_str {
   "($_[0][0] .. $_[0][1])";
 }
+
+# A Chunk is a name and a type object
+package Chunk;
+
+sub new {
+  my ($class, $name, $type) = @_;
+  bless [ $name, $type ] => $class;
+}
+
+sub name { $_[0][0] }
+sub type { $_[0][1] }
 
 1;
