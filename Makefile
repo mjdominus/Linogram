@@ -132,7 +132,7 @@ unit-tests: .dump-test-notes
 	perl -Ilib -Ilib/testutils -MTest::Harness -e 'runtests(@ARGV)' u/*.t
 
 
-.dump-test-notes: .dump-test-notes
+.dump-test-notes:
 	@cat u/test-notes
 	@sleep 5
 	touch .dump-test-notes
