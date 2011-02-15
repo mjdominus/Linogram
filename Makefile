@@ -129,7 +129,7 @@ system-tests:
 all-system-tests: nostamps system-tests
 
 unit-tests: .dump-test-notes
-	perl -Ilib -Ilib/testutils -MTest::Harness -e 'runtests(@ARGV)' u/*.t
+	perl -Ilib -Ilib/testutils -MTest::Harness -e 'runtests(@ARGV)' $$(find u -type f -name '*.t')
 
 
 .dump-test-notes: .dump-test-notes
