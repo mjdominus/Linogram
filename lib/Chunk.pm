@@ -102,7 +102,7 @@ sub my_constraint_expressions {
 }
 
 sub synthetic_constraints {
-  my @subchunks = $_[0]->all_leaf_subchunks;
+  my @subchunks = $_[0]->all_leaf_subchunks();
   Synthetic_Constraint_Set->new(map {$_ => Constraint->new($_ => 1)}
 					  @subchunks
 					 );
@@ -159,9 +159,10 @@ sub has_subchunk
 # However, it *should* recurse up the inheritance tree.
 sub drawables {
   my ($self, $env) = @_;
+  $env ||= Environment->empty();
   return @{$self->{D}} if $self->{D} && @{$self->{D}};
 
-  my %subchunk = $self->my_subchunks;
+  my %subchunk = $self->my_subchunks($env);
   my @drawables = grep ! $subchunk{$_}->is_scalar, keys %subchunk;
   @drawables = map {
     # XXX $self->subchunk($_) should just be $subchunk{$_}, but
@@ -195,12 +196,14 @@ sub add_subchunk {
 }
 
 sub my_subchunks {
-  my $self = shift;
+  my ($self, $env) = @_;
   my %subchunks;
   while (my ($nstr, $chunk)  = each %{$self->{O}}) {
     my $t = $chunk->type;
     if ($t->is_array_type) {
-      $subchunks{$nstr} = $t->base_type;
+      for my $i ($t->bounds($env)->range) {
+        $subchunks{"$nstr\[$i]"} = $t->base_type;
+      }
     } else {
       $subchunks{$nstr} = $t;
     }
@@ -209,15 +212,16 @@ sub my_subchunks {
 }
 
 sub all_leaf_subchunks {
-  my $self = shift;
+  my ($self, $env) = @_;
+  $env ||= Environment->empty();
   my @all;
   my $sc = sub { my $self = shift;
-                 Environment->new($self->my_subchunks)
+                 Environment->new($self->my_subchunks($env))
                };
   my %base = $self->up($sc)->var_hash;
   while (my ($name, $type) = each %base) {
     push @all, map {$_ eq "" ? $name : "$name.$_"}
-      $type->all_leaf_subchunks;
+      $type->all_leaf_subchunks($env->subset($name));
   }
   @all;
 }
@@ -281,7 +285,7 @@ sub base_type {
 }
 
 sub bounds {
-  my ($self, $nocroak) = @_;
+  my ($self, $params, $nocroak) = @_;
   Carp::croak("Can't get bounds for non-array type '" . $self->name . "'")
       unless $nocroak;
   return;
@@ -355,12 +359,13 @@ sub draw {
 # called on this object and all its subobjects.
 sub over {
   my ($self, $meth, %opts) = @_;
+  $opts{ENV} ||= Environment->empty();
 
   my $env = $opts{NO_UP} ? $self->$meth : $self->up($meth, %opts);
 
-  my %subchunks = $self->my_subchunks;
+  my %subchunks = $self->my_subchunks($opts{ENV});
   for my $name (keys %subchunks) {
-    my $subenv = $opts{ENV} ? $opts{ENV}->subset($name) : undef;
+    my $subenv = $opts{ENV}->subset($name);
     my $qenv = $subchunks{$name}->over($meth, %opts, ENV => $subenv)
                                 ->qualify($name);
     if ($opts{QUALIFY_VALS}) {
@@ -402,12 +407,13 @@ sub up_list {
 sub over_list {
   my ($self, $meth, %opts) = @_;
   my @results;
+  $opts{ENV} ||= Environment->empty();
 
   @results = $opts{NO_UP} ? $self->$meth : $self->up_list($meth, %opts);
 
-  my %subchunks = $self->my_subchunks;
+  my %subchunks = $self->my_subchunks($opts{ENV});
   for my $name (keys %subchunks) {
-    my $subenv = $opts{ENV} ? $opts{ENV}->subset($name) : undef;
+    my $subenv = $opts{ENV}->subset($name);
     my @sub = $subchunks{$name}->over_list($meth, %opts, ENV => $subenv);
     if ($self->subchunk($name)->is_array_type) {
       for my $i ($self->subchunk($name)->bounds($opts{ENV})->range) {
@@ -731,23 +737,30 @@ sub apply2 {
 
 package Type::Array;
 
+use Scalar::Util qw(blessed);
 sub new {
-  my ($class, $base_type, $bounds) = @_;
+  my ($class, $base_type, $bounds_expr) = @_;
   unless ($base_type->isa("Type")) {
     Carp::croak("Trying to make an array of type '$base_type', whatever that is");
   }
-  unless ($bounds =~ /\d+/) {
-    Carp::croak("Trying to make an array of type '" . $base_type->name . "' with bad bounds '$bounds'");
+
+  # Syntactic sugar: allow "2" instead of Expression->new('CON', 2)
+  unless (blessed $bounds_expr) {
+    if ($bounds_expr =~ /^\d+$/) {
+      $bounds_expr = Expression->new_constant($bounds_expr);
+    } else {
+      Carp::croak("Trying to make an array of type '" . $base_type->name . "' with bad bounds expression <$bounds_expr>\n");
+    }
   }
 
-  bless [ $base_type, $bounds ] => $class;
+  bless [ $base_type, $bounds_expr ] => $class;
 }
 
 sub base_type { $_[0][0] }
 sub bounds_expr { $_[0][1] }
 sub bounds {
-  my ($self, $params) = @_;
-  my $bounds_expr = $self->bounds_expr->substitute_variables($params)
+  my ($self, $env) = @_;
+  my $bounds_expr = $self->bounds_expr->substitute_variables($env)
                                       ->fold_constants;
   if ($bounds_expr->is_constant) {
     return Bounds->new(0, $bounds_expr->value - 1);
@@ -766,6 +779,12 @@ sub name {
   my $base_name = $self->base_type->name;
   my $bounds = $self->bounds_expr->to_str;
   "$base_name\[$bounds]";
+}
+
+sub element_name {
+  my ($self, $index) = @_;
+  my $base_name = $self->base_type->name;
+  "$base_name\[$index]";
 }
 
 sub subchunk {

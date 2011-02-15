@@ -3,7 +3,7 @@ use lib '../lib';
 use Chunk;
 use Name;
 use Value;
-use Test::More tests => 1;
+use Test::More tests => 3;
 
 my $s = Type->new("snark");
 $s->add_param_default(Name->new('p'), Expression->new_constant(13));
