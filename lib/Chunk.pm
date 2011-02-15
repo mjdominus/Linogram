@@ -356,18 +356,28 @@ sub draw {
 sub over {
   my ($self, $meth, %opts) = @_;
 
+  my $outer_env = $opts{ENV} || Environment->empty();
   my $env = $opts{NO_UP} ? $self->$meth : $self->up($meth, %opts);
 
   my %subchunks = $self->my_subchunks;
-  for my $name (keys %subchunks) {
-    my $subenv = $opts{ENV} ? $opts{ENV}->subset($name) : undef;
-    my $qenv = $subchunks{$name}->over($meth, %opts, ENV => $subenv)
-                                ->qualify($name);
+  for my $name_str (keys %subchunks) {
+    my $subenv = $outer_env->subset($name_str) ;
+    my $type = $subchunks{$name_str};
+    my $qenv = $type->over($meth, %opts, ENV => $subenv)->qualify($name_str);
+    if ($opts{EXPAND_ARRAYS} && $type->is_array_type) {
+      my %qqenv;
+      for my $i ($type->bounds($subenv)->range) {
+        for my $qkey (keys %$qenv) {
+          $qqenv{"$qkey\[$i]"} = $qenv->{$qkey};
+        }
+      }
+      $qenv = \%qqenv;
+    }
     if ($opts{QUALIFY_VALS}) {
       for my $vname ($qenv->vars) {
         my $expr = $qenv->lookup($vname);
         next unless defined $expr;
-        $qenv->merge($vname => $expr->qualify($name));
+        $qenv->merge($vname => $expr->qualify($name_str));
       }
     }
     $env->append_env($qenv);
