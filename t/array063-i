@@ -4,10 +4,11 @@ define snark {
 }
 
 define boojum {
-  snark s[2];
+  param index N;
+  snark s[N];
 }
 
-boojum b;
+boojum b(N=2);
 
 draw { &dump_hash; }
 

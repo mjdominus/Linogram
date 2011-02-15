@@ -514,7 +514,9 @@ sub all_constraint_equations {
   my ($self, $builtins, $param_defs, $p_order) = @_;
 
   my @constraint_expressions = $self->over_list('my_constraint_expressions',
-						ENV => $param_defs);
+						ENV => $param_defs,
+                                                EXPAND_ARRAYS => 1,
+                                               );
 
   for my $expr (@constraint_expressions) {
     $expr = $expr->substitute_variables($param_defs, $p_order);

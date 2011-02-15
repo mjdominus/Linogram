@@ -3,11 +3,7 @@ define snark {
   param number p = 13;
 }
 
-define boojum {
-  snark s[2];
-}
-
-boojum b;
+snark s[2];
 
 draw { &dump_hash; }
 
