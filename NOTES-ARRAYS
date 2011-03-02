@@ -1,4 +1,4 @@
-Here's how to deal with arrays.
+HOW TO DEAL WITH ARRAYS
 
 To generate constraint equations:
 
@@ -20,7 +20,7 @@ To generate constraint equations:
         If the inferences don't all match, throw a failure.
 
         In a future version, intferences can be overridden by explicit
-        index declarations.       
+        index declarations.
 
      d. For each index variable, run an appropriate loop and perform
         index variable substitution on the expression.  If there are
@@ -34,8 +34,7 @@ To generate constraint equations:
 
         The result is a single constraint equation.
 
-
-ABOUT THE FORMAT OF NAMES
+ABOUT THE FORMAT OF NAMES 2011-02-28
 
 Input syntax like "a.b[expr x].c[expr y]" should parse to something
 like
@@ -49,7 +48,7 @@ declarations of a, a.b, a.b.c, etc.
 Later, in step 3d(iii), these are collapsed to simple names.  This
 fails unless the expressions have been reduced to constants.
 
-RANGE INFERENCE
+RANGE INFERENCE 2011-02-28
 
 Suppose we have
 
@@ -88,4 +87,57 @@ D.
          property of the object being subscripted, not the index.
 
 
+INDEX DECLARATION SYNTAX 2011-03-01
+
+Explicit index declarations are a little silly.  It will usually be
+more convenient to use a syntax like this:
+
+        a[i] = b[i] for i in 0..2
+
+        a[i] = b[i] for i in 0..2, j in 2..4
+
+INDEX DECLARATIONS MAY BE MORE URGENT THAN YOU THOUGHT
+
+Suppose you want to draw the complete graph on 5 vertices.  Is this
+possible without index declarations?  I can't think of a way.
+
+        point P[5];
+        line  E[10];
+
+        E[i].start = P[i]
+        E[i].end = P[i+1] for i in 0..4
+        E[i].end = P[i+2] for i in 5..9
+
+Actually I guess this would work:
+
+        point P[5];
+        line  E1[5], E2[5];
+
+        E1[i].start = E2[i].start = P[i]
+        E1[i].end = P[i+1]
+        E2[i].end = P[i+2]
+
+but splitting E seems sort of arbitrary.
+
+You had similar worries about K_3,3., but it could be done like this:
+
+        point L[3], R[3]
+        line T[3], M[3], B[3]
+
+        T[i].start = L[1]
+        M[i].start = L[2]
+        B[i].start = L[3]
+        T[i].end = M[i].end = B[i].end = L[i]
+
+Is that better than this?
+
+        point L[3], R[3]
+        line E[9]
+
+        E[i].start = L[i % 3] for i in 0..8
+        E[i].end   = R[i / 3] for i in 0..8
+
+I think so, but it's certainly more verbose. One multiplies entities.
+The other requires a weird computational trick.  On the other hand,
+such tricks might be important in general.
 
