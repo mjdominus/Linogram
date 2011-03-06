@@ -1,5 +1,7 @@
 package Type;
+use Bounds;
 use Environment;
+use Type::Array;
 use strict 'vars';
 
 #sub FREEZER {

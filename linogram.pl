@@ -44,11 +44,15 @@ use Lexer;
 use Parser qw(_ parser star option commalist labeledblock operator %N 
               lookfor $End_of_Input error);
 
+use Constraint;
+use Constraint_Set;
 use Equation;
-use Chunk;
+use Type;
+use Type::Scalar;
 use Expression;
 use Name;
 use Stream 'drop';
+use Synthetic_Constraint_Set;
 
 my $FILE = shift || die "Usage: $0 [-Pperllib] filename";
 

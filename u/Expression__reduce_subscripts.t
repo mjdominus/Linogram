@@ -5,7 +5,8 @@ use lib '../lib', '../lib/testutils';
 use lib 'lib', 'lib/testutils';
 use Expression;
 use Name;
-use Chunk;
+use Type;
+use Type::Scalar;
 
 sub CON { Expression->new_constant(@_) }
 

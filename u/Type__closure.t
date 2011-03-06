@@ -1,6 +1,6 @@
 
 use lib '..';
-use Chunk;
+use Type;
 use Test::More tests => 4;
 
 my $t = Type->new("snark");

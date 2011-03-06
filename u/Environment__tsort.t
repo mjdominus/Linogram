@@ -2,7 +2,7 @@
 
 BEGIN {$N = 100}                # N tests
 use lib '../lib';
-use Chunk;
+use Type;
 use Expression;
 use Environment;
 BEGIN { *emap = \&Expression::emap }

@@ -1,6 +1,6 @@
 
 use lib '../lib';
-use Chunk;
+use Type;
 use Expression;
 sub C { Expression->new_constant(@_) }
 use Name;

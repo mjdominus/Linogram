@@ -1,6 +1,7 @@
 
 use lib '../lib';
-use Chunk;
+use Type;
+use Type::Scalar;
 use Expression;
 use Environment;
 use Test::More tests=> 4;

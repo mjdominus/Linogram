@@ -4,7 +4,8 @@ use Test::More tests => 27;
 use lib '../lib', '../lib/testutils';
 use lib 'lib', 'lib/testutils';
 use Name;
-use Chunk;
+use Type;
+use Type::Scalar;
 use Expression;
 sub CON { Expression->new_constant(@_) }
 
