@@ -3,6 +3,7 @@ HOW TO DEAL WITH ARRAYS
 To generate constraint equations:
 
   1. Assemble param environment (already coded)
+     See below, ASSEMBLE PARAM ENVIRONMENT
   2. Assemble constraint equations with arrays unexpanded
      Each equation is an EXPRESSION.
   3. For each expression:
@@ -19,7 +20,7 @@ To generate constraint equations:
 
         If the inferences don't all match, throw a failure.
 
-        In a future version, intferences can be overridden by explicit
+        In a future version, inferences can be overridden by explicit
         index declarations.
 
      d. For each index variable, run an appropriate loop and perform
@@ -41,7 +42,9 @@ like
 
         NAME: [ ["a"], ["b", (expr x)], ["c", (expr y)] ]
 
-Variables in expr x and expr y get range inference.  We can decduce
+(2011-03-06 It already does this.)
+
+Variables in expr x and expr y get range inference.  We can deduce
 the ranges very early because it is implicit at step 0 from the
 declarations of a, a.b, a.b.c, etc.
 
@@ -70,7 +73,7 @@ C.
         a[i] = a[2*i]
         b[i] = b[3*i]
 
-        Okay; the intferences are made per-constraint, and i can be
+        Okay; the inferences are made per-constraint, and i can be
         inferred to have range 0..2 in the first constraint and 0..3
         in the second.
 
@@ -82,7 +85,7 @@ D.
         is left unconstrained.  The syntax of index declarations will
         look like:
 
-         You thought that such declaratiobns could take an optional
+         You thought that such declarations could take an optional
          closed / open qualifier, but that is wrong; closure is a
          property of the object being subscripted, not the index.
 
@@ -140,4 +143,74 @@ Is that better than this?
 I think so, but it's certainly more verbose. One multiplies entities.
 The other requires a weird computational trick.  On the other hand,
 such tricks might be important in general.
+
+ASSEMBLE PARAM ENVIRONMENT 2011-03-06
+
+But what about params that are on subobjects of arrays? You can't
+traverse the arrays until step 3d, but you need to assemble the param
+enironment in step 1.  Also there might be something like:
+
+           Point p[N](color = i);
+
+So you need to have a recursion here: Assemble the param environment
+that you can, in each component, and then recursively try to deduce
+the bounds at in the subcomponents.
+
+MUTUAL RECURSION 2011-07-08
+
+Let's consider a simple example from the test suite:
+
+
+        # array-063
+
+        define snark {
+          param number p = 13;
+        }
+
+        snark s[2];
+
+We want the output to have
+
+        s[0].p: 13
+        s[1].p: 13
+
+The current problem is that when the parameter gathering recurses
+through the array, it doesn't take into  account that there are two
+snarks, each with its own params.  It uses ->over, which is just plain
+broken for arrays.
+
+At the moment the recursion enters s, it can see that the type is an
+array of snarks, and the declared size is the expression [CON 2].  In
+general this expression might be quite complicated, and might depend
+on parameters calculated elsewhere, but as a first cut it can try
+resolving the expression to a compile-time constant, using that, and
+then either 1. recursing separately into each array element, or
+2. just expanding the returned parameters from { p => 13 } to
+{ s{$_}.p => 13 for $_ in range(2) }.  The latter makes more sense to
+me right now.
+
+The logical place to do this is in ->my_subchunks.  At present, when
+returning the subchunks, if any is an array, it returns the base type
+instead of the array type, destroying the subscript information.  Is
+this *ever* correct?
+
+There are calls to ->my_subchunk as follows:
+
+      1. In->drawables, where there is already a comment marking it as
+      a bug.
+
+      2. In-> all_leaf_subchunks. This is used only to generate
+      initial synthetic constraints.  It seems to me it ought to
+      generate one such for each array element.
+
+      3. In ->over and ->over_list. These are used:
+
+         a. all_constraint_equations.  See above.
+         b. param_values.  That's what we're trying to fix.
+
+So it appears that I should try having ->my_subchunks expand arrays
+when possible.
+
+(As a side note, the ->{up,over}{,_list} functions do not seem to be
+used a lot; can I get rid of them, or at least simplify them?)
 

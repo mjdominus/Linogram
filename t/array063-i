@@ -1,0 +1,14 @@
+
+define snark {
+  param number p = 13;
+}
+
+snark s[2];
+
+draw { &dump_hash; }
+
+__END__
+
+require 'lib/testutils/dump_hash.pl';
+
+
