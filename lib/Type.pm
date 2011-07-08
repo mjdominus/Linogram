@@ -168,7 +168,10 @@ sub my_subchunks {
   my %subchunks;
   while (my ($n, $t) = each %basic_subchunks) {
     if ($t->is_array_type) {
-      $subchunks{$n} = $t->base_type;
+      my $bounds = $t->bounds;
+      for my $i ($bounds->range) {
+        $subchunks{"$n\[$i]"} = $t->base_type;
+      }
     } else {
       $subchunks{$n} = $t;
     }
@@ -294,6 +297,11 @@ sub draw {
   unless ($env) {
 #    $env ||= Environment->new();
     my $param_defs = $self->param_defs;
+    if (open F, ">>", "/tmp/param-defs") {
+      require Data::Dumper;
+      print F Data::Dumper::Dumper($param_defs);
+      print F "-------------\n";
+    }
     my $p_order = $param_defs->self_substitute();
     my $equations = $self->all_constraint_equations($builtins,
                                                     $param_defs,
