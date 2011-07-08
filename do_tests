@@ -4,10 +4,11 @@ my $N = 0;
 
 my $dir = ".";
 
-$FORCE = 0;
-if ($ARGV[0] eq "-f") {
-  $FORCE = shift;
-}
+use Getopt::Std;
+my %opt;
+getopts('fe', \%opt) or die "Usage: $0 [-f] [-e] testdir | testfiles...\n";
+my $FORCE = $opt{f};
+my $SHOW_ERRORS = $opt{e};
 
 my @inputs;
 if (@ARGV == 1 && -d $ARGV[0]) {
@@ -61,7 +62,9 @@ for my $infile (@inputs) {
     print "ok $N - $infile skipped (unchanged)\n";
     next;
   }
-  my @input = sort qx{./linogram.pl -P lib/testutils/dump_hash.pl $input 2> /dev/null};
+
+  my $err = $SHOW_ERRORS ? "" : "2> /dev/null";
+  my @input = sort qx{./linogram.pl -P lib/testutils/dump_hash.pl $input $err};
   my @output = -e($output) ? sort qx{cat $output} : ("FILE $output MISSING");
   chomp @input;
   chomp @output;
