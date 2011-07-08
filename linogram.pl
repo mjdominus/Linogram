@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# -*- cperl -*-
 
 use Data::Dumper;
 $Data::Dumper::Freezer = 'FREEZER';
@@ -342,7 +343,7 @@ $funapp = $Name - _("LPAREN") - $Expression - _("RPAREN")
               unless (exists $builtins{$namestr}) {
                 lino_error("Unknown function '$namestr'");
               }
-              Expression->new('FUN', $namestr, $_[2]) 
+              Expression->new('FUN', $namestr, $_[2])
             }
         ;
 
