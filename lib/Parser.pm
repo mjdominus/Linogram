@@ -22,6 +22,7 @@ use overload
                 '>' => \&V,
                 '/' => \&checkval,
                 '""' => \&overload::StrVal,
+                fallback => 1,
   ;
 
 sub parser (&) { bless $_[0] => __PACKAGE__ }
