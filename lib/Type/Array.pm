@@ -27,6 +27,12 @@ sub bounds {
     Carp::croak("Unspecificied variable(s) in $name\'s bounds");
   }
 }
+
+sub is_in_bounds {
+  my ($self, $index, $params) = @_;
+  $self->bounds($params)->in_bounds($index);
+}
+
 sub parent { $_[0]->base_type->parent }
 
 sub my_subchunks {
@@ -42,6 +48,8 @@ sub my_subchunks {
 sub is_array_type { 1 }
 sub is_scalar { 0 }
 sub param_values { Environment->new() }
+sub my_param_defs { $_[0]->base_type->my_param_defs }
+sub my_constraint_expressions { $_[0]->base_type->my_constraint_expressions }
 
 sub name {
   my $self = shift;
