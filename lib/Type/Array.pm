@@ -1,4 +1,5 @@
 package Type::Array;
+use Carp qw(confess croak);
 use strict;
 use base 'Type';
 
@@ -59,8 +60,18 @@ sub name {
 }
 
 sub subchunk {
-  my ($self, $name, $nocroak) = @_;
-  defined($name) ? $self->base_type->subchunk($name, $nocroak) : $self;
+  my ($self, $name, $nocroak, $param) = @_;
+  return $self unless defined $name;
+  $name = Name->new($name) unless ref $name; # convert "a" to N("a")
+  my ($first, $rest) = $name->split;
+
+  if (my($n) = $first =~ /\A \[ (\d+) \] \z/x) {
+    croak "subscript '$n' out of bounds for array"
+      unless $self->is_in_bounds($n, $param);
+    return $self->base_type->subchunk($rest, $nocroak, $param);
+  } else {
+    die("unparseable array subchunk name '$name'; should be [123]");
+  }
 }
 
 1;
