@@ -180,21 +180,21 @@ sub my_subchunks {
 }
 
 sub all_leaf_subchunks {
-  my $self = shift;
+  my ($self, $param) = @_;
   my @all;
   my $sc = sub { my $self = shift;
-                 Environment->new($self->my_subchunks)
+                 Environment->new($self->my_subchunks($param))
                };
   my %base = $self->up($sc)->var_hash;
   while (my ($name, $type) = each %base) {
     push @all, map {$_ eq "" ? $name : "$name.$_"}
-      $type->all_leaf_subchunks;
+      $type->all_leaf_subchunks($param);
   }
   @all;
 }
 
 sub subchunk {
-  my ($self, $name, $nocroak) = @_;
+  my ($self, $name, $nocroak, $param) = @_;
   return $self unless defined $name;
 
   $name = Name->new($name) unless ref $name; # convert "a" to N("a")
@@ -209,19 +209,19 @@ sub subchunk {
     if ($obj_type->is_array_type) {
       if (defined($subscript_expr)) {
 	# TODO array bounds check here, if possible
-	return $obj_type->base_type->subchunk($rest);
+	return $obj_type->base_type->subchunk($rest, $param);
       } else {
-	return $obj_type->subchunk($rest);
+	return $obj_type->subchunk($rest, $param);
       }
     } else {
       if (defined($subscript_expr) && not $nocroak) {
 	Carp::croak("Subscripted non-array object '$basename' in '$name'");
       } else {
-	return $obj_type->subchunk($rest);
+	return $obj_type->subchunk($rest, $param);
       }
     }
   } elsif (my $parent = $self->parent) {
-    $parent->subchunk($name);
+    $parent->subchunk($name, $param);
   } elsif ($nocroak) {
     return;
   } else {
