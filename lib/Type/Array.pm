@@ -1,4 +1,5 @@
 package Type::Array;
+use strict;
 
 sub new {
   my ($class, $base_type, $bounds) = @_;
@@ -24,6 +25,16 @@ sub bounds {
     my $name = $self->name;
     Carp::croak("Unspecificied variable(s) in $name\'s bounds");
   }
+}
+
+sub my_subchunks {
+  my ($self, $params) = @_;
+  $params //= {};
+  my %subchunks;
+  for my $i ($self->bounds($params)->range) {
+    $subchunks{"[$i]"} = $self->base_type;
+  }
+  return %subchunks;
 }
 
 sub is_array_type { 1 }

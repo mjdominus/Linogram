@@ -167,18 +167,17 @@ sub my_subchunks {
   my %basic_subchunks = %{$self->{O}};
   my %subchunks;
   while (my ($n, $t) = each %basic_subchunks) {
-    if ($t->is_array_type) {
-      my $bounds = $t->bounds;
-      for my $i ($bounds->range) {
-        $subchunks{"$n\[$i]"} = $t->base_type;
-      }
-    } else {
+#    if ($t->is_array_type) {
+#      my $bounds = $t->bounds;
+#      for my $i ($bounds->range) {
+#        $subchunks{"$n\[$i]"} = $t->base_type;
+#      }
+#    } else {
       $subchunks{$n} = $t;
-    }
+#    }
   }
   %subchunks;
 }
-
 
 sub all_leaf_subchunks {
   my $self = shift;
