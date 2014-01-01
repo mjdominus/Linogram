@@ -22,6 +22,12 @@ use overload
                 '>' => \&V,
                 '/' => \&checkval,
                 '""' => \&overload::StrVal,
+
+                # Work around obscure bug in perl5db.pl (!!)
+                # https://rt.perl.org/Ticket/Display.html?id=120911
+                "cmp" => sub { my ($self, $a, $rev) = @_;
+                              return ($rev ? -1 : 1) * ("$self" cmp "$a");
+                            },
   ;
 
 sub parser (&) { bless $_[0] => __PACKAGE__ }
