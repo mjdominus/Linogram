@@ -9,10 +9,10 @@ define box {
   point nw, n, ne, e, se, s, sw, w, c;
   number ht, wd;
   constraints {
-    nw = left.start  = top.start;
-    ne = right.start = top.end;
-    sw = left.end    = bottom.start;
-    se = right.end   = bottom.end;
+    nw = left.end    = top.start;
+    ne = right.end   = top.end;
+    sw = left.start  = bottom.start;
+    se = right.start = bottom.end;
 
     n = (nw + ne)/2;
     s = (sw + se)/2;
