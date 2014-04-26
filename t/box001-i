@@ -6,7 +6,7 @@ box B;
 constraints {
   B.ht = 2;
   B.wd = 3;
-  B.nw = (0,0);
+  B.sw = (0,0);
 }
 
 
